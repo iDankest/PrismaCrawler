@@ -31,6 +31,8 @@ model Character {
   critChance  Float @default(0.05)
   critDamage  Float @default(1.1)
 
+  totalDamageDone Int      @default(0)
+
   userId    Int      @unique
   user      User     @relation(fields: [userId], references: [id])
   inventory Item[]
