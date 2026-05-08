@@ -14,7 +14,7 @@ async function main() {
 
     const items = await prisma.item.createMany({
         data: [
-            {name: 'Espada Tochisima', type: 'WEAPON', value: 10, characterId: 1}
+            {name: 'Espada Tochisima', type: 'WEAPON', value: 10, characterId: 1},
             {name: 'La POTI QUE LO CURA TODO', type: 'CONSUMABLE', value: 5, characterId: 1}
         ]
     })
