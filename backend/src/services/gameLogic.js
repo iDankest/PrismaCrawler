@@ -1,0 +1,1 @@
+//Esto se usuara para con ensuciar los controlladores y añadir la logica del juego ejemplo calculateDamage() o checkCollision().
