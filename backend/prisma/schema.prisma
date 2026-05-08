@@ -42,6 +42,13 @@ model Monster {
  // expYield  Int         @default(20)
 }
 
+enum ItemType {
+  WEAPON
+  CONSUMABLE
+  ARMOR
+  KEYS
+}
+
 model Item {
   id          Int       @id @default(autoincrement())
   name        String
