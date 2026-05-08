@@ -27,6 +27,21 @@ model Character {
   inventory Item[]
 }
 
+enum MonsterType {
+  BASIC
+  ELITE
+  BOSS
+}
+
+model Monster {
+  id        Int           @id @default(autoincrement())
+  name      String   
+  type      MonsterType   @default(BASIC)      //Slime, Goblin, ETC...
+  hp        Int           @default(50)
+  attack    Int           @default(10)
+ // expYield  Int         @default(20)
+}
+
 model Item {
   id          Int       @id @default(autoincrement())
   name        String
