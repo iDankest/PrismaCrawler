@@ -22,6 +22,15 @@ model Character {
   level     Int      @default(1)
   hp        Int      @default(100)
   experience Int     @default(0)
+
+  //Stacks de combate
+
+  attack    Int @default(10)
+  defense   Int @default(5)
+  luck      Int @default(5)
+  critChance  Float @default(0.05)
+  critDamage  Float @default(1.1)
+
   userId    Int      @unique
   user      User     @relation(fields: [userId], references: [id])
   inventory Item[]
@@ -54,6 +63,14 @@ model Item {
   name        String
   type        ItemType    
   value       Int       @default(0)
+  // Stacks que otorga cada item
+
+  bonusHp     Int @default(0)
+  bonusAtack    Int @default(0)
+  bonusCrit     Float @default(0)
+  bonusLuck     Int @default(0)
+
+
   characterId Int
   character   Character @relation(fields: [characterId], references: [id])
 }
