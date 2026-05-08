@@ -1,8 +1,29 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const bcrypt = require('bcryptjs')
 
 async function main() {
     console.log('🌱 Este es un Seed de incio...')
+
+    const hashedPassword = await bcrypt.hash('admin123', 10);
+    const user = await prisma.user.upsert({
+        where: {email: 'admin@admin.com'},
+        update: {},
+        create: {
+            email: 'admin@admin.com',
+            password: hashedPassword,
+            role: 'ADMIN'
+        }
+    })
+    const character = await prisma.character.upsert({
+        where: {userId: user.id},
+        update: {},
+        create: {
+            name: 'Hades el diablo',
+            userId: user.id,
+            level: 10 //Quizas cambiamos lo de los niveles 
+        }
+    })
 
     const monsters = await prisma.monster.createMany({
         data : [

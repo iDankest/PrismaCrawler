@@ -52,7 +52,7 @@ enum ItemType {
 model Item {
   id          Int       @id @default(autoincrement())
   name        String
-  type        String    
+  type        ItemType    
   value       Int       @default(0)
   characterId Int
   character   Character @relation(fields: [characterId], references: [id])
