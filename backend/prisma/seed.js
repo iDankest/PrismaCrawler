@@ -12,4 +12,20 @@ async function main() {
         ],
     })
 
+    const items = await prisma.item.createMany({
+        data: [
+            {name: 'Espada Tochisima', type: 'WEAPON', value: 10, characterId: 1}
+            {name: 'La POTI QUE LO CURA TODO', type: 'CONSUMABLE', value: 5, characterId: 1}
+        ]
+    })
+    console.log('Seed Enviado y listo: '+ monsters.count, ' monstruos creados')
 }
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
