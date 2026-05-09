@@ -1,4 +1,4 @@
-// .prisma/migrations/schema.prisma
+// .prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -6,81 +6,84 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL") // <-- AÑADE ESTA LÍNEA
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
+  id        Int        @id @default(autoincrement())
+  email     String     @unique
   password  String
-  role      String   @default("USER")
+  role      String     @default("USER")
   character Character?
 }
 
 model Character {
-  id        Int      @id @default(autoincrement())
-  name      String
-  level     Int      @default(1)
-  hp        Int      @default(100)
-  experience Int     @default(0)
-  userId    Int      @unique
-  user      User     @relation(fields: [userId], references: [id])
+  id         Int       @id @default(autoincrement())
+  name       String
+  level      Int       @default(1)
+  hp         Int       @default(100)
+  experience Int       @default(0)
+  userId     Int       @unique
+  user       User      @relation(fields: [userId], references: [id])
+  
+  // AÑADIDO: Relaciones inversas requeridas por Prisma
   inventory Item[]
+  gameLogs  GameLog[]
+  dungeons  Dungeon[]
 }
 
 model Monster {
-  id          Int
-  monsterId   Int
+  id             Int            @id @default(autoincrement()) // AÑADIDO: Faltaba el @id
+  name           String         @default("Slime")             // AÑADIDO: Un nombre básico
+  dungeonEnemies DungeonEnemy[]                               // AÑADIDO: Relación inversa
 }
 
 model Item {
-  id          Int       @id @default(autoincrement())
-  name        String
-  type        String    
-  value       Int       @default(0)
-  characterId Int
-  character   Character @relation(fields: [characterId], references: [id])
+  id           Int           @id @default(autoincrement())
+  name         String
+  type         String    
+  value        Int           @default(0)
+  
+  // AÑADIDO: characterId debe ser opcional (Int?). 
+  // Si un item está tirado en el Dungeon, aún no tiene dueño.
+  characterId  Int?          
+  character    Character?    @relation(fields: [characterId], references: [id])
+  dungeonItems DungeonItem[] // AÑADIDO: Relación inversa
 }
 
 model GameLog {
-  id        Int           @id @default(autoincrement())
+  id          Int           @id @default(autoincrement())
   characterId Int
-  character Character     @relation(fields: [characterId], references: [id])
-
-  eventType GameEventType
-  details   String        // JSON serializado
-  createdAt DateTime      @default(now())
+  character   Character     @relation(fields: [characterId], references: [id])
+  eventType   GameEventType
+  details     String        // JSON serializado
+  createdAt   DateTime      @default(now())
 }
 
-// FALTA: Modelo Dungeon (estado actual del juego)
 model Dungeon {
-  id        Int      @id @default(autoincrement())
+  id          Int           @id @default(autoincrement())
   characterId Int
-  character Character @relation(fields: [characterId], references: [id])
+  character   Character     @relation(fields: [characterId], references: [id])
 
-  // Estado del dungeon
-  tiles     DungeonTile[]
-  enemies   DungeonEnemy[]
-  items     DungeonItem[]
+  tiles       DungeonTile[]
+  enemies     DungeonEnemy[]
+  items       DungeonItem[]
 
-  // Posición del jugador
-  playerX   Int
-  playerY   Int
+  playerX     Int
+  playerY     Int
 
-  // Metadata
-  level     Int      @default(1)
-  createdAt DateTime @default(now())
-  savedAt   DateTime @updatedAt
+  level       Int           @default(1)
+  createdAt   DateTime      @default(now())
+  savedAt     DateTime      @updatedAt
 }
 
-// FALTA: Tiles del dungeon
 model DungeonTile {
   id        Int      @id @default(autoincrement())
   dungeonId Int
   dungeon   Dungeon  @relation(fields: [dungeonId], references: [id])
-
   x         Int
   y         Int
-  type      TileType // FLOOR, WALL, DOOR, etc
+  type      TileType
 }
 
 enum TileType {
@@ -90,34 +93,27 @@ enum TileType {
   LOOT
 }
 
-// FALTA: Enemies en el dungeon (son instancias, no globales)
 model DungeonEnemy {
   id        Int      @id @default(autoincrement())
   dungeonId Int
   dungeon   Dungeon  @relation(fields: [dungeonId], references: [id])
-
   monsterId Int
   monster   Monster  @relation(fields: [monsterId], references: [id])
-
   x         Int
   y         Int
   currentHp Int
 }
 
-// Items en el dungeon
 model DungeonItem {
   id        Int      @id @default(autoincrement())
   dungeonId Int
   dungeon   Dungeon  @relation(fields: [dungeonId], references: [id])
-
   itemId    Int
   item      Item     @relation(fields: [itemId], references: [id])
-
   x         Int
   y         Int
 }
 
-// MEJOR: GameLog más específico
 enum GameEventType {
   PLAYER_MOVED
   PLAYER_ATTACKED

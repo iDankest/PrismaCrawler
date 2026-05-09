@@ -2,6 +2,7 @@
 //Esto se usuara para no ensuciar Controllers y añadir la logica del juego ejemplo calculateDamage() o checkCollision().
 
 const prisma = require('../config/db.js');
+const AppError = require('../utils/AppError.js');
 
 const gameLogicService = { // Implementación sólo IA
   
@@ -55,33 +56,87 @@ const gameLogicService = { // Implementación sólo IA
       throw error; // Se lo lanzamos al controlador para que lo maneje
     }
   },
-// --- MOVER JUGADOR ---
-  updatePlayerPosition: async (playerId, targetX, targetY) => {
-    // 1. Verificamos si el jugador existe
-    const player = await prisma.player.findUnique({
-      where: { id: playerId }
-    });
-
-    if (!player) {
-      throw new AppError("Jugador no encontrado para el movimiento", 404);
-    }
-
-    // 2. (Opcional) Aquí podrías meter lógica pura: ¿El movimiento es válido? ¿Hay una pared en targetX, targetY?
-    // if (!gameLogicService.isValidMove(targetX, targetY)) throw new AppError("Movimiento inválido", 400);
-
-    // 3. Actualizamos las coordenadas en la base de datos
-    const updatedPlayer = await prisma.player.update({
-      where: { id: playerId },
-      data: {
+  // --- MOVER JUGADOR EN EL DUNGEON ---
+  updatePlayerPosition: async (dungeonId, characterId, targetX, targetY) => {
+    
+    // 1. Verificamos que no haya una pared en esas coordenadas
+    const tileDestino = await prisma.dungeonTile.findFirst({
+      where: {
+        dungeonId: dungeonId,
         x: targetX,
         y: targetY
       }
     });
 
+    if (tileDestino && tileDestino.type === 'WALL') {
+      throw new AppError("No puedes moverte ahí, hay una pared.", 400);
+    }
+
+    // 2. Movemos al jugador actualizando el DUNGEON
+    const updatedDungeon = await prisma.dungeon.update({
+      where: { id: dungeonId },
+      data: {
+        playerX: targetX,
+        playerY: targetY
+      }
+    });
+
+    // 3. Registramos el movimiento en el GameLog
+    await prisma.gameLog.create({
+      data: {
+        characterId: characterId,
+        eventType: 'PLAYER_MOVED',
+        details: JSON.stringify({ fromX: targetX - 1, fromY: targetY - 1, toX: targetX, toY: targetY })
+      }
+    });
+
     return {
-      newX: updatedPlayer.x,
-      newY: updatedPlayer.y,
-      message: "Movimiento completado"
+      newX: updatedDungeon.playerX,
+      newY: updatedDungeon.playerY,
+      message: "Te has movido correctamente"
+    };
+  },
+
+  // --- ATACAR A UN ENEMIGO DEL DUNGEON ---
+  attackEnemy: async (characterId, dungeonEnemyId, power) => {
+    // 1. Buscamos al enemigo instanciado en el mapa
+    const enemy = await prisma.dungeonEnemy.findUnique({
+      where: { id: dungeonEnemyId }
+    });
+
+    if (!enemy) throw new AppError("Enemigo no encontrado", 404);
+
+    // 2. Calculamos daño y restamos vida
+    let newHp = enemy.currentHp - power;
+    let isDead = false;
+
+    if (newHp <= 0) {
+      newHp = 0;
+      isDead = true;
+      
+      // Si muere, podemos borrarlo del mapa
+      await prisma.dungeonEnemy.delete({ where: { id: dungeonEnemyId } });
+      
+      await prisma.gameLog.create({
+        data: { characterId, eventType: 'ENEMY_DIED', details: JSON.stringify({ enemyId: enemy.id }) }
+      });
+      
+    } else {
+      // Si no muere, actualizamos su vida
+      await prisma.dungeonEnemy.update({
+        where: { id: dungeonEnemyId },
+        data: { currentHp: newHp }
+      });
+      
+      await prisma.gameLog.create({
+        data: { characterId, eventType: 'PLAYER_ATTACKED', details: JSON.stringify({ damage: power, enemyRemainingHp: newHp }) }
+      });
+    }
+
+    return {
+      damageDealt: power,
+      enemyRemainingHp: newHp,
+      isDead
     };
   },
 // --- CURAR JUGADOR ---
