@@ -3,9 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -27,6 +26,11 @@ model Character {
   inventory Item[]
 }
 
+model Monster {
+  id          Int
+  monsterId   Int
+}
+
 model Item {
   id          Int       @id @default(autoincrement())
   name        String
@@ -37,7 +41,87 @@ model Item {
 }
 
 model GameLog {
+  id        Int           @id @default(autoincrement())
+  characterId Int
+  character Character     @relation(fields: [characterId], references: [id])
+
+  eventType GameEventType
+  details   String        // JSON serializado
+  createdAt DateTime      @default(now())
+}
+
+// FALTA: Modelo Dungeon (estado actual del juego)
+model Dungeon {
   id        Int      @id @default(autoincrement())
-  event     String
+  characterId Int
+  character Character @relation(fields: [characterId], references: [id])
+
+  // Estado del dungeon
+  tiles     DungeonTile[]
+  enemies   DungeonEnemy[]
+  items     DungeonItem[]
+
+  // Posición del jugador
+  playerX   Int
+  playerY   Int
+
+  // Metadata
+  level     Int      @default(1)
   createdAt DateTime @default(now())
+  savedAt   DateTime @updatedAt
+}
+
+// FALTA: Tiles del dungeon
+model DungeonTile {
+  id        Int      @id @default(autoincrement())
+  dungeonId Int
+  dungeon   Dungeon  @relation(fields: [dungeonId], references: [id])
+
+  x         Int
+  y         Int
+  type      TileType // FLOOR, WALL, DOOR, etc
+}
+
+enum TileType {
+  FLOOR
+  WALL
+  DOOR
+  LOOT
+}
+
+// FALTA: Enemies en el dungeon (son instancias, no globales)
+model DungeonEnemy {
+  id        Int      @id @default(autoincrement())
+  dungeonId Int
+  dungeon   Dungeon  @relation(fields: [dungeonId], references: [id])
+
+  monsterId Int
+  monster   Monster  @relation(fields: [monsterId], references: [id])
+
+  x         Int
+  y         Int
+  currentHp Int
+}
+
+// Items en el dungeon
+model DungeonItem {
+  id        Int      @id @default(autoincrement())
+  dungeonId Int
+  dungeon   Dungeon  @relation(fields: [dungeonId], references: [id])
+
+  itemId    Int
+  item      Item     @relation(fields: [itemId], references: [id])
+
+  x         Int
+  y         Int
+}
+
+// MEJOR: GameLog más específico
+enum GameEventType {
+  PLAYER_MOVED
+  PLAYER_ATTACKED
+  PLAYER_DIED
+  ENEMY_DIED
+  ITEM_PICKED
+  LEVEL_UP
 }
