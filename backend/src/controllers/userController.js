@@ -4,14 +4,16 @@
 const prisma = require('../config/db.js');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const AppError = require('../utils/AppError');
 
 // En un entorno real, esta clave secreta debería venir de tu archivo .env (ej. process.env.JWT_SECRET)
 const JWT_SECRET = process.env.JWT_SECRET || 'mi_clave_secreta_super_segura';
 
-const userController = {
+const userController = { // Pendiente de revisión, hecho por IA
   
   // --- REGISTRO DE USUARIO ---
-  register: async (req, res) => {
+  register: async (req, res, next) => {
+
     try {
       const { email, password, name } = req.body;
 
@@ -21,7 +23,7 @@ const userController = {
       });
 
       if (userExists) {
-        return res.status(400).json({ error: 'El correo electrónico ya está en uso' });
+        return next(new AppError('El correo electrónico ya está en uso', 400));
       }
 
       // 2. Encriptar (hashear) la contraseña
@@ -53,12 +55,12 @@ const userController = {
 
     } catch (error) {
       console.error('Error en register:', error);
-      res.status(500).json({ error: 'Error interno del servidor al registrar usuario' });
+      next(new AppError('Error interno del servidor al registrar usuario',500));
     }
   },
 
   // --- LOGIN DE USUARIO ---
-  login: async (req, res) => {
+  login: async (req, res, next) => {
     try {
       const { email, password } = req.body;
 
@@ -69,14 +71,14 @@ const userController = {
 
       // Si no existe, devolvemos error genérico por seguridad
       if (!user) {
-        return res.status(401).json({ error: 'Credenciales inválidas' });
+        return next(new AppError('Credenciales inválidas',401));
       }
 
       // 2. Comparar la contraseña enviada con la contraseña encriptada de la BD
       const validPassword = await bcrypt.compare(password, user.password);
 
       if (!validPassword) {
-        return res.status(401).json({ error: 'Credenciales inválidas' });
+        return next(new AppError('Credenciales inválidas', 401));
       }
 
       // 3. Generar el Token (JWT)
@@ -95,7 +97,7 @@ const userController = {
 
     } catch (error) {
       console.error('Error en login:', error);
-      res.status(500).json({ error: 'Error interno del servidor al iniciar sesión' });
+      next(new AppError('Error interno del servidor al iniciar sesión',500));
     }
   }
 };
