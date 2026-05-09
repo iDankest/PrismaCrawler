@@ -33,9 +33,67 @@ const gameController = {
       // se lo pasamos al middleware global de errores.
       next(error);
     }
-  }
+  },
 
-  // Aquí irían otras funciones del juego, ej. movePlayer, healPlayer, etc.
+  // --- MOVER JUGADOR (Placeholder) ---
+  movePlayer: async (req, res, next) => {
+    try {
+      // Supongamos que el movimiento se basa en coordenadas X e Y
+      const { playerId, targetX, targetY } = req.body;
+
+      // 1. Validaciones básicas
+      if (!playerId || targetX === undefined || targetY === undefined) {
+        return next(new AppError('Faltan datos para el movimiento (playerId, targetX, targetY)', 400));
+      }
+
+      // 2. Llamada al servicio (Esta función la crearás en gameLogic.js más adelante)
+      // const result = await gameLogicService.updatePlayerPosition(playerId, targetX, targetY);
+
+      // Simulamos una respuesta temporal mientras no existe la lógica real
+      const mockResult = { newX: targetX, newY: targetY, message: "Movimiento simulado" };
+
+      // 3. Respuesta exitosa
+      res.status(200).json({
+        success: true,
+        movementInfo: mockResult // Cambiar a 'result' cuando actives el servicio
+      });
+
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // --- CURAR JUGADOR (Placeholder) ---
+  healPlayer: async (req, res, next) => {
+    try {
+      const { playerId, healAmount, itemId } = req.body;
+
+      // 1. Validaciones básicas
+      if (!playerId || !healAmount) {
+        return next(new AppError('Faltan datos para la curación (playerId, healAmount)', 400));
+      }
+
+      if (typeof healAmount !== 'number' || healAmount <= 0) {
+        return next(new AppError('La cantidad de curación debe ser un número mayor a cero', 400));
+      }
+
+      // 2. Llamada al servicio (A programar en gameLogic.js después)
+      // Podría descontar un item del inventario y subir la vida
+      // const result = await gameLogicService.applyHealing(playerId, healAmount, itemId);
+
+      // Simulamos una respuesta
+      const mockResult = { healedAmount: healAmount, remainingHp: 100, message: "Curación simulada" };
+
+      // 3. Respuesta exitosa
+      res.status(200).json({
+        success: true,
+        healingInfo: mockResult // Cambiar a 'result' cuando actives el servicio
+      });
+
+    } catch (error) {
+      next(error);
+    }
+  }
 };
 
 module.exports = gameController;
