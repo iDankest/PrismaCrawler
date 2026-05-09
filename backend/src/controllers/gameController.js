@@ -120,15 +120,10 @@ const gameController = {
         itemId,
       );
 
-      res.status(200).json({
-        success: true,
-        healingInfo: result,
-      });
-
       // 3. Respuesta exitosa
       res.status(200).json({
         success: true,
-        healingInfo: mockResult, // Cambiar a 'result' cuando actives el servicio
+        healingInfo: result, // Cambiar a 'result' cuando actives el servicio
       });
     } catch (error) {
       next(error);
