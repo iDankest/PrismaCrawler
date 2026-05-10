@@ -1,15 +1,17 @@
-import { useState } from 'react'
-import './App.css'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import Login from './pages/Login'
+import Game from './pages/Game'
+import Header from './components/Header'
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-    <section className='flex items-center justify-center h-screen'>
-      <h1 className='text-9xl font-bold text-blue-600 '>Prisma Crawler</h1>
-    </section>
-    </>
+    <Router>
+      <Header />
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/game" element={<Game />} />
+      </Routes>
+    </Router>
   )
 }
 
