@@ -14,13 +14,6 @@ const gameLogicService = { // Implementación sólo IA
     const damage = ataque - defensa;
     return damage > 0 ? damage : 0;
   },
-
-  checkCollision: (playerA, playerB) => {
-    // Ejemplo básico: si están en las mismas coordenadas, hay colisión
-    return playerA.x === playerB.x && playerA.y === playerB.y;
-  },
-
-
   // --- 2. LÓGICA CON BASE DE DATOS ---
   // Estas funciones usan Prisma para leer o guardar cosas del juego.
 
@@ -56,47 +49,6 @@ const gameLogicService = { // Implementación sólo IA
       throw error; // Se lo lanzamos al controlador para que lo maneje
     }
   },
-  // --- MOVER JUGADOR EN EL DUNGEON ---
-  updatePlayerPosition: async (dungeonId, characterId, targetX, targetY) => {
-    
-    // 1. Verificamos que no haya una pared en esas coordenadas
-    const tileDestino = await prisma.dungeonTile.findFirst({
-      where: {
-        dungeonId: dungeonId,
-        x: targetX,
-        y: targetY
-      }
-    });
-
-    if (tileDestino && tileDestino.type === 'WALL') {
-      throw new AppError("No puedes moverte ahí, hay una pared.", 400);
-    }
-
-    // 2. Movemos al jugador actualizando el DUNGEON
-    const updatedDungeon = await prisma.dungeon.update({
-      where: { id: dungeonId },
-      data: {
-        playerX: targetX,
-        playerY: targetY
-      }
-    });
-
-    // 3. Registramos el movimiento en el GameLog
-    await prisma.gameLog.create({
-      data: {
-        characterId: characterId,
-        eventType: 'PLAYER_MOVED',
-        details: JSON.stringify({ fromX: targetX - 1, fromY: targetY - 1, toX: targetX, toY: targetY })
-      }
-    });
-
-    return {
-      newX: updatedDungeon.playerX,
-      newY: updatedDungeon.playerY,
-      message: "Te has movido correctamente"
-    };
-  },
-
   // --- ATACAR A UN ENEMIGO DEL DUNGEON ---
   attackEnemy: async (characterId, dungeonEnemyId, power) => {
     // 1. Buscamos al enemigo instanciado en el mapa
