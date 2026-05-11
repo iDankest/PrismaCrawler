@@ -1,4 +1,10 @@
 import { useEffect, useRef } from 'react'
+import personajeGif from '../assets/Personaje.gif'
+
+// 1. Inicializamos la imagen FUERA del componente. 
+// Así evitamos que el navegador la recargue cada vez que el jugador da un paso.
+const playerImage = new Image()
+playerImage.src = personajeGif
 
 function GameCanvas({ map, playerPos }) {
   const canvasRef = useRef(null)
@@ -26,18 +32,35 @@ function GameCanvas({ map, playerPos }) {
     })
 
     // Dibujar jugador
-    ctx.fillStyle = '#7b9fff'
-    ctx.fillRect(
-      playerPos.x * TILE_SIZE, 
-      playerPos.y * TILE_SIZE, 
-      TILE_SIZE, 
-      TILE_SIZE
-    )
-    ctx.fillStyle = '#ffffff'
-    ctx.font = 'bold 20px Arial'
-    ctx.textAlign = 'center'
-    ctx.fillText('●', playerPos.x * TILE_SIZE + TILE_SIZE/2, playerPos.y * TILE_SIZE + TILE_SIZE/2 + 5)
+    // ctx.fillStyle = '#7b9fff'
+    // ctx.fillRect(
+    //   playerPos.x * TILE_SIZE, 
+    //   playerPos.y * TILE_SIZE, 
+    //   TILE_SIZE, 
+    //   TILE_SIZE
+    // )
+    // ctx.fillStyle = '#ffffff'
+    // ctx.font = 'bold 20px Arial'
+    // ctx.textAlign = 'center'
+    // ctx.fillText('●', playerPos.x * TILE_SIZE + TILE_SIZE/2, playerPos.y * TILE_SIZE + TILE_SIZE/2 + 5) // Imagen Jugador
+// 2. Eliminamos el texto '●' y creamos una función para dibujar la imagen
+    const drawPlayer = () => {
+      ctx.drawImage(
+        playerImage, 
+        playerPos.x * TILE_SIZE, 
+        playerPos.y * TILE_SIZE, 
+        TILE_SIZE, // Ancho de la imagen
+        TILE_SIZE  // Alto de la imagen
+      )
+    }
 
+    // 3. Comprobamos si la imagen ya se descargó.
+    // Si ya está lista, la dibujamos al instante. Si no, esperamos a que cargue.
+    if (playerImage.complete) {
+      drawPlayer()
+    } else {
+      playerImage.onload = () => drawPlayer()
+    }
   }, [map, playerPos])
 
   return (
