@@ -1,48 +1,45 @@
 // .backend/src/controllers/userController.js
-// La lógica que habla con prisma para contenido register y login req res...
 
 const prisma = require('../config/db.js');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const AppError = require('../utils/AppError');
 
-// En un entorno real, esta clave secreta debería venir de tu archivo .env (ej. process.env.JWT_SECRET)
 const JWT_SECRET = process.env.JWT_SECRET || 'mi_clave_secreta_super_segura';
 
-const userController = { // Pendiente de revisión, hecho por IA
+const userController = {
   
-  // --- REGISTRO DE USUARIO ---
   register: async (req, res, next) => {
-
     try {
+      console.log('📝 [REGISTER] Request recibido:', req.body); // ← AÑADE ESTO
+      
       const { email, password, name } = req.body;
 
-      // 1. Validar que el usuario no exista previamente
       const userExists = await prisma.user.findUnique({
         where: { email },
       });
+
+      console.log('✅ [REGISTER] User search completado'); // ← AÑADE ESTO
 
       if (userExists) {
         return next(new AppError('El correo electrónico ya está en uso', 400));
       }
 
-      // 2. Encriptar (hashear) la contraseña
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
 
-      // 3. Crear el nuevo usuario en la base de datos
       const newUser = await prisma.user.create({
         data: {
           email,
-          password: hashedPassword, // ¡Guardamos la contraseña encriptada, nunca en texto plano!
+          password: hashedPassword,
           name,
         },
       });
 
-      // 4. (Opcional) Generar un token para que el usuario inicie sesión automáticamente al registrarse
+      console.log('✅ [REGISTER] Usuario creado:', newUser.id); // ← AÑADE ESTO
+
       const token = jwt.sign({ userId: newUser.id }, JWT_SECRET, { expiresIn: '24h' });
 
-      // 5. Devolver la respuesta excluyendo la contraseña por seguridad
       res.status(201).json({
         message: 'Usuario creado exitosamente',
         token,
@@ -54,37 +51,39 @@ const userController = { // Pendiente de revisión, hecho por IA
       });
 
     } catch (error) {
-      console.error('Error en register:', error);
+      console.error('❌ [REGISTER] Error:', error.message); // ← AÑADE ESTO
       next(new AppError('Error interno del servidor al registrar usuario',500));
     }
   },
 
-  // --- LOGIN DE USUARIO ---
   login: async (req, res, next) => {
     try {
+      console.log('🔑 [LOGIN] Request recibido:', req.body); // ← AÑADE ESTO
+      
       const { email, password } = req.body;
 
-      // 1. Buscar al usuario por email
       const user = await prisma.user.findUnique({
         where: { email },
       });
 
-      // Si no existe, devolvemos error genérico por seguridad
+      console.log('✅ [LOGIN] User search completado, usuario existe:', !!user); // ← AÑADE ESTO
+
       if (!user) {
         return next(new AppError('Credenciales inválidas',401));
       }
 
-      // 2. Comparar la contraseña enviada con la contraseña encriptada de la BD
       const validPassword = await bcrypt.compare(password, user.password);
+
+      console.log('✅ [LOGIN] Password check completado:', validPassword); // ← AÑADE ESTO
 
       if (!validPassword) {
         return next(new AppError('Credenciales inválidas', 401));
       }
 
-      // 3. Generar el Token (JWT)
       const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn:'24h'});
 
-      // 4. Enviar respuesta exitosa
+      console.log('✅ [LOGIN] Token generado'); // ← AÑADE ESTO
+
       res.json({
         message: 'Login exitoso',
         token,
@@ -96,11 +95,11 @@ const userController = { // Pendiente de revisión, hecho por IA
       });
 
     } catch (error) {
-      console.error('Error en login:', error);
+      console.error('❌ [LOGIN] Error:', error.message); // ← AÑADE ESTO
       next(new AppError('Error interno del servidor al iniciar sesión',500));
     }
   },
-  // Añade esto para que la ruta GET tenga una función que ejecutar
+
   getProfile: async (req, res, next) => {
     res.status(200).json({ message: "Perfil del usuario (En construcción)" });
   }

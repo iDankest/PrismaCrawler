@@ -3,6 +3,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Login from './pages/Login'
 import Game from './pages/Game'
+import { ProtectedRoute } from './components/ProtectedRoute'
 /* import Header from './components/Header' */
 
 function App() {
@@ -11,7 +12,14 @@ function App() {
 {/*       <Header /> */}
       <Routes>
         <Route path="/" element={<Login />} />
-        <Route path="/game" element={<Game />} />
+         <Route 
+          path="/game" 
+          element={
+            <ProtectedRoute>
+              <Game />
+            </ProtectedRoute>
+          } 
+        />
       </Routes>
     </Router>
   )

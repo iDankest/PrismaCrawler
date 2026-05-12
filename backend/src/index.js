@@ -18,6 +18,7 @@ app.use(cors()); // Permite peticiones desde el frontend (React)
 app.use(express.json()); // Permite a Express entender los JSON que mandamos en el req.body
 
 // 6. Montar las Rutas
+
 app.use('/api/users', userRoutes);
 app.use('/api/game', gameRoutes);
 

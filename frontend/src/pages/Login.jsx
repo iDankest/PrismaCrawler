@@ -5,29 +5,40 @@ import { LoadingScreen } from '../components/loading'
 import logoImg from '../assets/Logo.png'
 import personajeGif from '../assets/Personaje.gif'
 import {useNavigate} from 'react-router-dom'
+import { useApi } from '../hooks/useApi.js'
 
-/* import bannerImg from '../assets/BannerPlay.png'
- */function Login() {
-  const [email, setEmail] = useState('')
+function Login() {
+const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  
+  // 2. Inicializamos el hook
+  const { call, loading, error } = useApi()
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  // Limpiamos errores previos si los hay
+  console.log("🚀 Intentando login para:", email);
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    setLoading(true)
-    // Simula login (luego será tu API)
-    setTimeout(() => {
-      setLoading(false)
-      // Navega a /game o lo que sea
-      navigate('/game')
-    }, 2000)
-  }
+  try {
+    const data = await call('/api/users/login', {
+      method: 'POST',
+      body: { email, password }
+    });
 
-  // Si está loading, muestra el componente
-  if (loading) {
-    return <LoadingScreen />
+    console.log("✅ Respuesta del servidor:", data);
+
+    if (data && data.token) {
+      localStorage.setItem('token', data.token);
+      navigate('/game');
+    }
+  } catch (err) {
+    // El hook useApi ya gestiona el error, pero forzamos un log aquí
+    console.error("❌ Fallo crítico en el login:", err.message);
   }
+};
+
+  /* if (loading) return <LoadingScreen /> */
 
   return (
     <section className="flex flex-col items-center justify-center h-screen">
@@ -49,6 +60,12 @@ import {useNavigate} from 'react-router-dom'
       {/* Form */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-5 bg-blue-900 p-8 rounded-lg border-4 border-blue-600 w-96 shadow-lg">
         
+        {/* MOSTRAR ERROR SI EXISTE */}
+        {error && (
+          <div className="bg-red-900/50 border border-red-500 text-red-200 text-xs p-3 rounded mb-2">
+            ERROR: {error.toUpperCase()}
+          </div>
+        )}
         {/* Email Input */}
         <div>
           <label className="block text-blue-300 text-xs font-bold mb-2 tracking-widest" htmlFor="email">
