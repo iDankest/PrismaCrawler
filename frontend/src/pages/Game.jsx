@@ -6,40 +6,119 @@ function Game() {
   const [playerPos, setPlayerPos] = useState({ x: 5, y: 0 });
   const [map, setMap] = useState([]);
 
-  // --- NUEVO: Estado para las estadísticas del jugador ---
-  const [playerStats, setPlayerStats] = useState({
-    hp: 100,
-    maxHp: 100,
-    xp: 0,
-    attack: 15,
-    defense: 5,
+
+
+  const loadMapFromBackend = (mapData) => {
+  const newMap = [];
+  const newEnemies = [];
+  let startPos = { x: 5, y: 5 }; // Por defecto
+
+  // mapData.layout es ["####DD####", "#________#", ...]
+  mapData.layout.forEach((row, y) => {
+    const numericRow = [];
+    
+    // Convertimos el string "#_M_P_I" en un array de letras ['#', 'M', '_', 'P', 'I']
+    row.split('').forEach((char, x) => {
+      if (char === '#') {
+        numericRow.push(1); // 1 es pared
+      } else {
+        numericRow.push(0); // 0 es suelo pisable para todo lo demás
+      }
+
+      // Generar elementos según la letra
+      if (char === 'M') {
+        newEnemies.push({
+          id: `enemy_${x}_${y}`,
+          x: x,
+          y: y,
+          ...mapData.dictionary['M'] // Trae el HP y ataque del diccionario
+        });
+      } else if (char === 'P') {
+        startPos = { x, y }; // Encontramos dónde debe empezar el jugador
+      }
+    });
+    
+    newMap.push(numericRow);
   });
-  // --- NUEVO: Estado para los enemigos vivos en el mapa ---
-  const [enemies, setEnemies] = useState([]);
 
-  useEffect(() => {
-    // Genera el mapa al entrar
-    generateMap();
-  }, []);
+  setMap(newMap);
+  setEnemies(newEnemies);
+  setPlayerPos(startPos);
+  
+};
 
-  const generateMap = () => {
-    const newMap = Array(10)
-      .fill()
-      .map(() =>
-        Array(10)
-          .fill()
-          .map(() => (Math.random() > 0.8 ? 1 : 0)),
-      );
-    // Nos aseguramos de que el jugador no aparezca dentro de una pared al inicio
-    newMap[5][0] = 0;
-    setMap(newMap);
+useEffect(() => {
+  // 1. Creamos una función asíncrona dentro del useEffect para poder usar await
+  const fetchMap = async () => {
+    try {
+      // 2. Intentamos pedir el mapa al backend
+      // (Ajusta la URL a la ruta real de tu API cuando la tengas lista)
+      const response = await fetch('http://localhost:3000/api/game/map/1'); 
+      
+      // Si el servidor responde con un error (ej. 404 o 500), lanzamos el error
+      if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`);
+      }
+
+      const mapData = await response.json();
+      
+      // 3. Si todo va bien, cargamos el mapa del backend
+      loadMapFromBackend(mapData);
+      console.log("Mapa cargado con éxito desde el servidor.");
+
+    } catch (error) {
+      // 4. PLAN DE CONTINGENCIA (Fallback)
+      // Si la API falla, no hay internet o el fetch da error, entramos aquí
+      console.warn("No se pudo cargar el mapa. Generando mapa aleatorio...", error.message);
+      generateMap();
+    }
   };
+
+  fetchMap();
+}, []);
+// --- NUEVO: Estado para las estadísticas del jugador ---
+const [playerStats, setPlayerStats] = useState({
+  hp: 100,
+  maxHp: 100,
+  xp: 0,
+  attack: 15,
+  defense: 5,
+});
+// --- NUEVO: Estado para los enemigos vivos en el mapa ---
+const generateMap = () => {
+  // Lógica de mapa procedural como fallback
+  const newMap = Array(10).fill().map(() =>
+    Array(10).fill().map(() => (Math.random() > 0.8 ? 1 : 0))
+  );
+  newMap[5][0] = 0; // Asegurar que la casilla inicial no es pared
+
+  const generatedEnemies = [];
+  newMap.forEach((row, y) => {
+    row.forEach((tile, x) => {
+      // Generar enemigos aleatorios
+      if (tile === 0 && Math.random() > 0.9 && !(x === 5 && y === 0)) {
+        generatedEnemies.push({
+          id: `enemy_${x}_${y}`,
+          x, 
+          y, 
+          hp: 30, 
+          attack: 10, 
+          defense: 2
+        });
+      }
+    });
+  });
+
+  setMap(newMap);
+  setEnemies(generatedEnemies);
+  setPlayerPos({ x: 5, y: 0 }); // Posición inicial por defecto del mapa aleatorio
+};
 
 
   // --- NUEVO: Lógica pura matemática (Migrada del backend) ---
   const calculateDamage = (ataque, defensa) => {
     const damage = ataque - defensa;
-    return damage > 0 ? damage : 0;
+    return damage > 0 ? damage : 1;
   };
 
   const handleCombat = (enemy) => {

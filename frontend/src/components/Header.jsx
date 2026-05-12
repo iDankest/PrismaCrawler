@@ -1,4 +1,4 @@
-/* import bannerPlay from '../assets/BannerPlay.png'
+import bannerPlay from '../assets/BannerPlay.png'
 import bannerInfo from '../assets/Banneinfo.png'
 import bannerItems from '../assets/Banneintems.png'
 import bannerLeader from '../assets/BanneLeader.png'
@@ -16,4 +16,4 @@ function Header() {
   )
 }
 
-export default Header */
+export default Header

@@ -1,4 +1,4 @@
-// ./src/controllers/userController.js
+// .backend/src/controllers/userController.js
 // La lógica que habla con prisma para contenido register y login req res...
 
 const prisma = require('../config/db.js');
@@ -82,7 +82,7 @@ const userController = { // Pendiente de revisión, hecho por IA
       }
 
       // 3. Generar el Token (JWT)
-      const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '24h' });
+      const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn:'24h'});
 
       // 4. Enviar respuesta exitosa
       res.json({
