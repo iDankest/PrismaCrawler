@@ -9,116 +9,40 @@ datasource db {
   directUrl = env("DIRECT_URL") // <-- AÑADE ESTA LÍNEA
 }
 
+// 1. USUARIOS (Login y Registro)
 model User {
-  id        Int        @id @default(autoincrement())
-  email     String     @unique
-  password  String
-  role      String     @default("USER")
-  character Character?
-}
-
-model Character {
-  id         Int       @id @default(autoincrement())
-  name       String
-  level      Int       @default(1)
-  hp         Int       @default(100)
-  experience Int       @default(0)
-  userId     Int       @unique
-  user       User      @relation(fields: [userId], references: [id])
+  id       Int      @id @default(autoincrement())
+  email    String   @unique
+  password String
+  name     String
+  role     String?  @default("USER")
   
-  // AÑADIDO: Relaciones inversas requeridas por Prisma
-  inventory Item[]
-  gameLogs  GameLog[]
-  dungeons  Dungeon[]
+  // Relación: Un usuario puede tener muchas puntuaciones guardadas
+  scores   Score[]
 }
 
-model Monster {
-  id             Int            @id @default(autoincrement()) // AÑADIDO: Faltaba el @id
-  name           String         @default("Slime")             // AÑADIDO: Un nombre básico
-  dungeonEnemies DungeonEnemy[]                               // AÑADIDO: Relación inversa
-}
-
-model Item {
-  id           Int           @id @default(autoincrement())
-  name         String
-  type         String    
-  value        Int           @default(0)
+// 2. MAPAS (El diseño de los niveles que leerá el frontend)
+model Map {
+  id         Int      @id @default(autoincrement())
+  name       String   // Ej: "Mazmorra de Inicio"
+  level      Int      @default(1)
   
-  // AÑADIDO: characterId debe ser opcional (Int?). 
-  // Si un item está tirado en el Dungeon, aún no tiene dueño.
-  characterId  Int?          
-  character    Character?    @relation(fields: [characterId], references: [id])
-  dungeonItems DungeonItem[] // AÑADIDO: Relación inversa
+  // Usamos el tipo Json de Prisma para guardar tu matriz ["####", "#_M_", ...]
+  layout     Json     
+  
+  // Usamos Json para guardar qué hace cada letra { "M": { "hp": 30 } }
+  dictionary Json     
+  
+  createdAt  DateTime @default(now())
 }
 
-model GameLog {
-  id          Int           @id @default(autoincrement())
-  characterId Int
-  character   Character     @relation(fields: [characterId], references: [id])
-  eventType   GameEventType
-  details     String        // JSON serializado
-  createdAt   DateTime      @default(now())
-}
-
-model Dungeon {
-  id          Int           @id @default(autoincrement())
-  characterId Int
-  character   Character     @relation(fields: [characterId], references: [id])
-
-  tiles       DungeonTile[]
-  enemies     DungeonEnemy[]
-  items       DungeonItem[]
-
-  playerX     Int
-  playerY     Int
-
-  level       Int           @default(1)
-  createdAt   DateTime      @default(now())
-  savedAt     DateTime      @updatedAt
-}
-
-model DungeonTile {
+// 3. PUNTUACIONES (Para el Top 10)
+model Score {
   id        Int      @id @default(autoincrement())
-  dungeonId Int
-  dungeon   Dungeon  @relation(fields: [dungeonId], references: [id])
-  x         Int
-  y         Int
-  type      TileType
-}
-
-enum TileType {
-  FLOOR
-  WALL
-  DOOR
-  LOOT
-}
-
-model DungeonEnemy {
-  id        Int      @id @default(autoincrement())
-  dungeonId Int
-  dungeon   Dungeon  @relation(fields: [dungeonId], references: [id])
-  monsterId Int
-  monster   Monster  @relation(fields: [monsterId], references: [id])
-  x         Int
-  y         Int
-  currentHp Int
-}
-
-model DungeonItem {
-  id        Int      @id @default(autoincrement())
-  dungeonId Int
-  dungeon   Dungeon  @relation(fields: [dungeonId], references: [id])
-  itemId    Int
-  item      Item     @relation(fields: [itemId], references: [id])
-  x         Int
-  y         Int
-}
-
-enum GameEventType {
-  PLAYER_MOVED
-  PLAYER_ATTACKED
-  PLAYER_DIED
-  ENEMY_DIED
-  ITEM_PICKED
-  LEVEL_UP
+  xp        Int      // La experiencia con la que murió el personaje
+  
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  
+  createdAt DateTime @default(now())
 }
