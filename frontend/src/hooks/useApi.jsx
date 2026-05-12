@@ -1,3 +1,5 @@
+// .frontend/src/hooks/useApi.js
+
 import { useState } from 'react'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
@@ -9,6 +11,8 @@ export function useApi() {
   const call = async (endpoint, options = {}) => {
     setLoading(true)
     setError(null)
+
+    console.log('📡 [useApi] Llamando a:', `${API_URL}${endpoint}`); // ← AÑADE ESTO
 
     try {
       const token = localStorage.getItem('token')
@@ -23,15 +27,19 @@ export function useApi() {
         ...options
       })
 
+      console.log('📡 [useApi] Response status:', response.status); // ← AÑADE ESTO
+
       if (!response.ok) {
         const errorData = await response.json()
         throw new Error(errorData.message || 'Error en la API')
       }
 
       const data = await response.json()
+      console.log('📡 [useApi] Data recibida:', data); // ← AÑADE ESTO
       return data
 
     } catch (err) {
+      console.error('❌ [useApi] Error:', err.message); // ← AÑADE ESTO
       setError(err.message)
       throw err
     } finally {
