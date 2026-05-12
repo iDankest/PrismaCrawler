@@ -1,81 +1,74 @@
+// .frontend/src/pages/Login.jsx
+
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useApi } from '../hooks/useApi'
 import { LoadingScreen } from '../components/loading'
 import logoImg from '../assets/Logo.png'
 import personajeGif from '../assets/Personaje.gif'
+import {useNavigate} from 'react-router-dom'
+import { useApi } from '../hooks/useApi.js'
 
 function Login() {
-  const [email, setEmail] = useState('')
+const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [isRegistering, setIsRegistering] = useState(false)
   const navigate = useNavigate()
-  const { call, loading, error: apiError } = useApi()
-  const [localError, setLocalError] = useState(null)
+  
+  // 2. Inicializamos el hook
+  const { call, loading, error } = useApi()
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  // Limpiamos errores previos si los hay
+  console.log("🚀 Intentando login para:", email);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLocalError(null)
+  try {
+    const data = await call('/api/users/login', {
+      method: 'POST',
+      body: { email, password }
+    });
 
-    try {
-      const endpoint = isRegistering ? '/auth/register' : '/auth/login'
-      const response = await call(endpoint, {
-        method: 'POST',
-        body: { email, password, name: email.split('@')[0] } // Para registro
-      })
+    console.log("✅ Respuesta del servidor:", data);
 
-      localStorage.setItem('token', response.token)
-      localStorage.setItem('user', JSON.stringify(response.user))
-
-      setTimeout(() => {
-        navigate('/game')
-      }, 2000)
-
-    } catch (err) {
-      setLocalError(err.message || 'Error al conectar')
+    if (data && data.token) {
+      localStorage.setItem('token', data.token);
+      navigate('/game');
     }
+  } catch (err) {
+    // El hook useApi ya gestiona el error, pero forzamos un log aquí
+    console.error("❌ Fallo crítico en el login:", err.message);
   }
+};
 
-  const error = apiError || localError
-
-  if (loading) {
-    return <LoadingScreen />
-  }
+  /* if (loading) return <LoadingScreen /> */
 
   return (
-    <section className="flex flex-col items-center justify-center min-h-screen bg-slate-900 px-4">
-      <div className="text-center mb-12">
-        <img 
-          className="w-32 h-32 mx-auto mb-6 rounded-sm border-2 border-blue-600 shadow-lg" 
-          src={logoImg} 
-          alt="Logo" 
-        />
+    <section className="flex flex-col items-center justify-center h-screen">
+      {/* Header */}
+      <div className="text-center mb-8">
+        {/* <img src={bannerImg} alt="Banner" /> */}
+        <img className="w-32 h-32 mx-auto mb-4 rounded-sm border-2 border-blue-600" src={logoImg} alt="Logo" />
         
-        <div className="flex items-center justify-center gap-4 mb-6">
-          <div>
-            <h1 className="text-5xl font-bold text-blue-300" style={{ letterSpacing: '3px' }}>
-              PRISMA
-            </h1>
-            <p className="text-2xl font-bold text-blue-400" style={{ letterSpacing: '2px' }}>
-              CRAWLER
-            </p>
-          </div>
-          <img className="w-20 h-20" src={personajeGif} alt="Personaje" />
+        <div className="flex items-center gap-3 mb-4">
+          <h1 className="text-4xl uppercase font-bold text-blue-300 absolute" style={{ letterSpacing: '2px' }}>
+            Prisma <span className="text-blue-500 relative right-15 -top-7 text-xl">Crawler</span>
+          </h1>
+          <img className="w-16 h-16 relative left-35 top-3" src={personajeGif} alt="Personaje" />
         </div>
         
-        <p className="text-blue-200 text-xs tracking-widest font-semibold">INITIALIZE LOGIN</p>
+        <p className="text-blue-200 text-xs tracking-widest">INITIALIZE LOGIN</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5 bg-blue-900 p-8 rounded-xl border-4 border-blue-500 w-full max-w-md shadow-2xl">
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5 bg-blue-900 p-8 rounded-lg border-4 border-blue-600 w-96 shadow-lg">
         
+        {/* MOSTRAR ERROR SI EXISTE */}
         {error && (
-          <div className="p-3 bg-red-900 border-2 border-red-500 rounded text-red-200 text-sm">
-            {error}
+          <div className="bg-red-900/50 border border-red-500 text-red-200 text-xs p-3 rounded mb-2">
+            ERROR: {error.toUpperCase()}
           </div>
         )}
-
+        {/* Email Input */}
         <div>
-          <label className="block text-blue-200 text-xs font-bold mb-3 tracking-widest" htmlFor="email">
+          <label className="block text-blue-300 text-xs font-bold mb-2 tracking-widest" htmlFor="email">
             EMAIL LINK
           </label>
           <input
@@ -84,13 +77,13 @@ function Login() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="hero@dungeon.net"
-            className="w-full px-4 py-3 bg-slate-900 border-2 border-blue-500 rounded text-blue-300 text-sm placeholder-blue-600 focus:outline-none focus:border-blue-300"
-            required
+            className="w-full px-4 py-3 bg-slate-900 border-2 border-blue-600 rounded text-blue-400 text-sm placeholder-blue-700 focus:outline-none focus:border-blue-400"
           />
         </div>
 
+        {/* Password Input */}
         <div>
-          <label className="block text-blue-200 text-xs font-bold mb-3 tracking-widest" htmlFor="password">
+          <label className="block text-blue-300 text-xs font-bold mb-2 tracking-widest" htmlFor="password">
             SECRET CODE
           </label>
           <input
@@ -99,35 +92,23 @@ function Login() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            className="w-full px-4 py-3 bg-slate-900 border-2 border-blue-500 rounded text-blue-300 text-sm placeholder-blue-600 focus:outline-none focus:border-blue-300"
-            required
+            className="w-full px-4 py-3 bg-slate-900 border-2 border-blue-600 rounded text-blue-400 text-sm placeholder-blue-700 focus:outline-none focus:border-blue-400"
           />
         </div>
 
+        {/* Login Button */}
         <button
           type="submit"
           disabled={loading}
-          className="px-6 py-3 bg-blue-500 hover:bg-blue-400 active:bg-blue-600 text-slate-900 font-bold rounded-lg border-2 border-blue-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed tracking-widest text-sm uppercase shadow-lg"
+          className="px-6 py-3 bg-blue-500 hover:bg-blue-400 text-slate-900 font-bold rounded border-2 border-blue-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed tracking-widest text-sm uppercase"
         >
-          {loading ? 'INITIALIZING...' : isRegistering ? 'CREATE ACCOUNT' : 'INITIALIZE LOGIN'}
+          {loading ? "INITIALIZING..." : "INITIALIZE LOGIN"}
         </button>
 
-        <button
-          type="button"
-          onClick={() => {
-            setIsRegistering(!isRegistering)
-            setLocalError(null)
-          }}
-          className="text-blue-300 text-xs text-center hover:text-blue-200 border-b-2 border-blue-400 hover:border-blue-300 pb-1 tracking-widest transition"
-        >
-          {isRegistering ? 'Already have an account? LOGIN' : 'New player? REGISTER'}
-        </button>
-
-        {!isRegistering && (
-          <a href="#" className="text-blue-300 text-xs text-center hover:text-blue-200 border-b-2 border-blue-400 pb-1 tracking-widest">
-            FORGOT SCROLL?
-          </a>
-        )}
+        {/* Forgot Password */}
+        <a href="#" className="text-blue-400 text-xs text-center hover:text-blue-300 border-b border-blue-400 pb-1 tracking-widest">
+          FORGOT SCROLL?
+        </a>
       </form>
     </section>
   )

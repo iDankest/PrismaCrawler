@@ -20,7 +20,6 @@ app.use(express.json()); // Permite a Express entender los JSON que mandamos en 
 // 6. Montar las Rutas
 
 app.use('/api/users', userRoutes);
-app.use('/auth', userRoutes);
 app.use('/api/game', gameRoutes);
 
 // 7. Manejador de rutas no encontradas (404)
