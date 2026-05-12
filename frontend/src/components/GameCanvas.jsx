@@ -2,11 +2,14 @@
 
 import { useEffect, useRef } from 'react'
 import personajeGif from '../assets/Personaje.gif'
+import enemyGif from '../assets/EnemySlime.gif'
 
 // 1. Inicializamos la imagen FUERA del componente. 
 // Así evitamos que el navegador la recargue cada vez que el jugador da un paso.
 const playerImage = new Image()
 playerImage.src = personajeGif
+const enemyImage = new Image()
+enemyImage.src = enemyGif
 
 
 function GameCanvas({ map, playerPos }) {
@@ -59,12 +62,28 @@ function GameCanvas({ map, playerPos }) {
       )
     }
 
+    const drawEnemy = () => {
+      ctx.drawImage(
+        enemyImage, 
+        5 * TILE_SIZE, 
+        5 * TILE_SIZE, 
+        TILE_SIZE, // Ancho de la imagen
+        TILE_SIZE  // Alto de la imagen
+      )
+    }
+
     // 3. Comprobamos si la imagen ya se descargó.
     // Si ya está lista, la dibujamos al instante. Si no, esperamos a que cargue.
     if (playerImage.complete) {
       drawPlayer()
     } else {
       playerImage.onload = () => drawPlayer()
+    }
+    
+    if (enemyImage.complete) {
+      drawEnemy()
+    } else {
+      enemyImage.onload = () => drawEnemy()
     }
   }, [map, playerPos])
 
