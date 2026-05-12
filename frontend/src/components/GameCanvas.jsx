@@ -1,3 +1,5 @@
+// ./frontend/components/Gamecanvas.jsx
+
 import { useEffect, useRef } from 'react'
 import personajeGif from '../assets/Personaje.gif'
 
@@ -5,6 +7,7 @@ import personajeGif from '../assets/Personaje.gif'
 // Así evitamos que el navegador la recargue cada vez que el jugador da un paso.
 const playerImage = new Image()
 playerImage.src = personajeGif
+
 
 function GameCanvas({ map, playerPos }) {
   const canvasRef = useRef(null)
@@ -43,6 +46,8 @@ function GameCanvas({ map, playerPos }) {
     // ctx.font = 'bold 20px Arial'
     // ctx.textAlign = 'center'
     // ctx.fillText('●', playerPos.x * TILE_SIZE + TILE_SIZE/2, playerPos.y * TILE_SIZE + TILE_SIZE/2 + 5) // Imagen Jugador
+
+
 // 2. Eliminamos el texto '●' y creamos una función para dibujar la imagen
     const drawPlayer = () => {
       ctx.drawImage(
