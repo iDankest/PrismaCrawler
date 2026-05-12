@@ -29,5 +29,7 @@ app.use((req, res, next) => {
 // 8. MIDDLEWARE DE ERRORES (Siempre va al final)
 app.use(errorHandler);
 
+app.use(cors())
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}...`));
