@@ -1,4 +1,4 @@
-// ./src/middlewares/errorHandler.js
+// .backend/src/middlewares/errorHandler.js
 
 const errorHandler = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
