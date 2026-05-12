@@ -23,6 +23,13 @@ function PhaserGame() {
         this.keys = null
         this.playerDirection = 1
         this.isAttacking = false
+        this.gameOver = false
+        this.pendingTimers = []
+        
+        // ✅ SISTEMA DE OLEADAS
+        this.currentWave = 0
+        this.waveActive = false
+        this.enemiesPerWave = 2
       }
 
       async preload() {
@@ -67,21 +74,21 @@ function PhaserGame() {
         // CREAR ANIMACIONES PLAYER
         this.anims.create({
           key: 'idle',
-          frames: this.anims.generateFrameNumbers('playerIdle', { start: 0, end: 4 }),
+          frames: this.anims.generateFrameNumbers('playerIdle', { start: 0, end: 3 }),
           frameRate: 8,
           repeat: -1
         })
 
         this.anims.create({
           key: 'walk',
-          frames: this.anims.generateFrameNumbers('playerWalk', { start: 0, end: 3 }),
+          frames: this.anims.generateFrameNumbers('playerWalk', { start: 0, end: 2 }),
           frameRate: 12,
           repeat: -1
         })
 
         this.anims.create({
           key: 'attack',
-          frames: this.anims.generateFrameNumbers('playerAttack', { start: 0, end: 5 }),
+          frames: this.anims.generateFrameNumbers('playerAttack', { start: 0, end: 3 }),
           frameRate: 15,
           repeat: 0
         })
@@ -89,7 +96,7 @@ function PhaserGame() {
         // CREAR ANIMACIONES ENEMY
         this.anims.create({
           key: 'enemy-idle',
-          frames: this.anims.generateFrameNumbers('enemy', { start: 0, end: 3 }),
+          frames: this.anims.generateFrameNumbers('enemy', { start: 0, end: 2 }),
           frameRate: 8,
           repeat: -1
         })
@@ -110,49 +117,14 @@ function PhaserGame() {
         this.player.hp = 100
         this.player.maxHp = 100
 
-        // CREAR ENEMIGOS
-        for (let i = 0; i < 2; i++) {
-          let x, y, tooClose
-          
-          do {
-            tooClose = false
-            x = Phaser.Math.Between(50, 300)
-            y = Phaser.Math.Between(50, 300)
-            
-            const dist = Phaser.Math.Distance.Between(x, y, 160, 160)
-            if (dist < 100) {
-              tooClose = true
-            }
-          } while (tooClose)
-
-          const enemy = this.add.sprite(x, y, 'enemy', 0)
-          enemy.play('enemy-idle')
-          enemy.setScale(1.5)
-          this.enemies.push({
-            sprite: enemy,
-            x: enemy.x,
-            y: enemy.y,
-            width: 32,
-            height: 32,
-            hp: 30,
-            maxHp: 30,
-            isAttacking: false,
-            lastAttackTime: 0,
-            attackCooldown: 1000 // 1 segundo entre ataques
-          })
-        }
-
-        // CONTROLES WASD
-        this.keys = this.input.keyboard.addKeys({
-          W: Phaser.Input.Keyboard.KeyCodes.W,
-          A: Phaser.Input.Keyboard.KeyCodes.A,
-          S: Phaser.Input.Keyboard.KeyCodes.S,
-          D: Phaser.Input.Keyboard.KeyCodes.D,
-          SPACE: Phaser.Input.Keyboard.KeyCodes.SPACE
-        })
+        // ✅ INICIAR PRIMERA OLEADA
+        this.startWave()
       }
 
       update() {
+        // Si el juego ha terminado, no continuar update
+        if (this.gameOver) return
+
         let isMoving = false
         let nextX = this.player.x
         let nextY = this.player.y
@@ -262,6 +234,94 @@ function PhaserGame() {
         })
       }
 
+      // ✅ SISTEMA DE OLEADAS
+      startWave() {
+        this.currentWave++
+        this.waveActive = true
+        console.log(`\n🌊 OLEADA ${this.currentWave} INICIADA!`)
+        
+        // Limpiar enemigos previos (si los hay)
+        this.enemies.forEach(enemy => {
+          if (enemy.sprite.active) {
+            enemy.sprite.destroy()
+          }
+        })
+        this.enemies = []
+
+        // Calcular dificultad: más enemigos y más fuertes cada oleada
+        const enemyCount = this.enemiesPerWave + Math.floor(this.currentWave / 2)
+        const enemyHpMultiplier = 1 + (this.currentWave - 1) * 0.3
+        const enemyDamageMultiplier = 1 + (this.currentWave - 1) * 0.2
+
+        // Crear enemigos de la oleada
+        for (let i = 0; i < enemyCount; i++) {
+          this.spawnEnemy(enemyHpMultiplier, enemyDamageMultiplier)
+        }
+
+        console.log(`📊 Enemigos: ${enemyCount} | HP x${enemyHpMultiplier.toFixed(1)} | Daño x${enemyDamageMultiplier.toFixed(1)}`)
+      }
+
+      // ✅ SPAWN UN ENEMIGO CON PARÁMETROS DE DIFICULTAD
+      spawnEnemy(hpMultiplier = 1, damageMultiplier = 1) {
+        let x, y, tooClose
+
+        do {
+          tooClose = false
+          x = Phaser.Math.Between(50, 300)
+          y = Phaser.Math.Between(50, 300)
+
+          const dist = Phaser.Math.Distance.Between(x, y, 160, 160)
+          if (dist < 100) {
+            tooClose = true
+          }
+        } while (tooClose)
+
+        const enemy = this.add.sprite(x, y, 'enemy', 0)
+        enemy.play('enemy-idle')
+        enemy.setScale(1.5)
+
+        const baseHp = 30
+        const baseDamage = 5
+        const attackCooldown = Math.max(600, 1000 - this.currentWave * 50) // Más rápido conforme avanza
+
+        this.enemies.push({
+          sprite: enemy,
+          x: enemy.x,
+          y: enemy.y,
+          width: 32,
+          height: 32,
+          hp: Math.round(baseHp * hpMultiplier),
+          maxHp: Math.round(baseHp * hpMultiplier),
+          isAttacking: false,
+          lastAttackTime: 0,
+          attackCooldown: attackCooldown,
+          baseDamage: baseDamage,
+          damage: Math.round(baseDamage * damageMultiplier)
+        })
+      }
+
+      // ✅ Helper para crear timers rastreados
+      addTrackedTimer(delay, callback) {
+        const timer = this.time.delayedCall(delay, () => {
+          if (!this.gameOver) {
+            callback()
+          }
+          this.pendingTimers = this.pendingTimers.filter(t => t !== timer)
+        })
+        this.pendingTimers.push(timer)
+        return timer
+      }
+
+      // ✅ Cancelar todos los timers pendientes
+      cancelAllTimers() {
+        this.pendingTimers.forEach(timer => {
+          if (timer && timer.elapsed < timer.delay) {
+            this.time.removeEvent(timer)
+          }
+        })
+        this.pendingTimers = []
+      }
+
       attack() {
         this.isAttacking = true
         this.player.setTexture('playerAttack')
@@ -278,44 +338,89 @@ function PhaserGame() {
 
           if (distance < attackRange) {
             enemy.hp -= 10
-            console.log('¡Golpe! Enemigo HP:', enemy.hp)
+            console.log(`⚔️ ¡Golpe! Enemigo HP: ${enemy.hp}/${enemy.maxHp}`)
 
             if (enemy.hp <= 0) {
               enemy.sprite.destroy()
               this.enemies = this.enemies.filter(e => e !== enemy)
-              console.log('¡Enemigo derrotado!')
+              console.log(`💀 ¡Enemigo derrotado! (${this.enemies.length} quedan)`)
+
+              // ✅ Si no quedan enemigos EN ESTA OLEADA, siguiente oleada
+              if (this.enemies.length === 0) {
+                this.waveActive = false
+                console.log(`🎉 ¡OLEADA ${this.currentWave} COMPLETADA!`)
+                
+                // Esperar 2 segundos antes de la siguiente oleada
+                this.addTrackedTimer(2000, () => {
+                  if (!this.gameOver) {
+                    this.startWave()
+                  }
+                })
+              }
             }
           }
         })
 
-        this.time.delayedCall(400, () => {
-          this.isAttacking = false
-          this.player.setTexture('playerIdle')
+        this.addTrackedTimer(400, () => {
+          if (this.player.active) {
+            this.isAttacking = false
+            this.player.setTexture('playerIdle')
+          }
         })
       }
 
       enemyAttack(enemy) {
+        if (this.gameOver) return
+
         enemy.isAttacking = true
         enemy.lastAttackTime = this.time.now
         enemy.sprite.setTexture('enemyAttack')
         enemy.sprite.play('enemy-attack', true)
 
-        // Daño al player
-        const attackDamage = 5
+        // Daño al player (aumenta con oleadas)
+        const attackDamage = enemy.damage
         this.player.hp -= attackDamage
-        console.log('¡Enemigo te muerde! HP del jugador:', this.player.hp)
+        console.log(`🩸 ¡Enemigo te muerde! HP: ${this.player.hp}/${this.player.maxHp} (-${attackDamage})`)
 
         if (this.player.hp <= 0) {
-          console.log('¡GAME OVER!')
+          console.log(`💀 ¡GAME OVER! Derrotado en la oleada ${this.currentWave}`)
+          this.gameOver = true
+          this.cancelAllTimers()
           this.scene.pause()
+          return
         }
 
-        this.time.delayedCall(400, () => {
-          enemy.isAttacking = false
-          enemy.sprite.setTexture('enemy')
-          enemy.sprite.play('enemy-idle')
+        this.addTrackedTimer(400, () => {
+          if (enemy.sprite.active) {
+            enemy.isAttacking = false
+            enemy.sprite.setTexture('enemy')
+            enemy.sprite.play('enemy-idle')
+          }
         })
       }
+
+      // CONTROLES (al final del create)
+      // Se mueve al final para asegurar que todo esté creado
+      createControls() {
+        this.keys = this.input.keyboard.addKeys({
+          W: Phaser.Input.Keyboard.KeyCodes.W,
+          A: Phaser.Input.Keyboard.KeyCodes.A,
+          S: Phaser.Input.Keyboard.KeyCodes.S,
+          D: Phaser.Input.Keyboard.KeyCodes.D,
+          SPACE: Phaser.Input.Keyboard.KeyCodes.SPACE
+        })
+      }
+
+      shutdown() {
+        this.cancelAllTimers()
+      }
+    }
+
+    // Parchear el método create para asegurar que los controles se crean al final
+    const originalCreate = GameScene.prototype.create
+    GameScene.prototype.create = function() {
+      originalCreate.call(this)
+      this.createControls()
     }
 
     const config = {
