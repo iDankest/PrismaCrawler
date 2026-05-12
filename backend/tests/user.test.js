@@ -56,5 +56,46 @@ describe('Rutas de Usuario - Autenticación', () => {
     expect(response.status).toBe(400);
     expect(response.body.message).toBe('El correo electrónico ya está en uso');
   });
+  // --- TEST 3: Login Exitoso ---
+  it('Debería iniciar sesión correctamente y devolver un token', async () => {
+    const response = await request(app)
+      .post('/api/users/login')
+      .send({
+        email: 'test@ejemplo.com', // Usamos el correo del Test 1
+        password: 'password123'    // Usamos la contraseña del Test 1
+      });
 
+    // Comprobamos que el login responda con un 200 OK
+    expect(response.status).toBe(200);
+    expect(response.body.message).toBe('Login exitoso');
+    
+    // Verificamos que el token existe
+    expect(response.body).toHaveProperty('token');
+
+    // ¡Guardamos el token para futuros tests de rutas protegidas!
+    authToken = response.body.token;
+  });
+
+  // --- TEST 4: Login con credenciales inválidas ---
+  it('No debería permitir iniciar sesión con contraseña incorrecta', async () => {
+    const response = await request(app)
+      .post('/api/users/login')
+      .send({
+        email: 'test@ejemplo.com',
+        password: 'clave_equivocada'
+      });
+
+    // Comprobamos que nos rechace con un 401 Unauthorized
+    expect(response.status).toBe(401);
+    expect(response.body.message).toBe('Credenciales inválidas');
+  });
+  it('Debería poder acceder a una ruta protegida con su token', async () => {
+    const response = await request(app)
+      .post('/api/scores')
+      // Aquí enviamos el token que guardamos durante el Login
+      .set('Authorization', `Bearer ${authToken}`) 
+      .send({ xp: 500 });
+
+    expect(response.status).toBe(201);
+  });
 });
