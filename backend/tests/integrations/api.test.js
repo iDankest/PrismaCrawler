@@ -1,5 +1,5 @@
 const request = require('supertest');
-const app = require('../../src/server'); // Tu servidor Express
+const app = require('../../src/index.js'); // Tu servidor Express
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 

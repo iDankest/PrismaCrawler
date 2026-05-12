@@ -31,5 +31,12 @@ app.use(errorHandler);
 
 app.use(cors())
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}...`));
+// Exportamos la app para que Supertest pueda usarla en las pruebas
+module.exports = app;
+
+// Solo encendemos el servidor si este archivo se ejecuta directamente (ej. npm run dev)
+// Si lo está ejecutando Jest para las pruebas, esta parte se ignora.
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}...`));
+}
