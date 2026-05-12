@@ -99,6 +99,10 @@ const userController = { // Pendiente de revisión, hecho por IA
       console.error('Error en login:', error);
       next(new AppError('Error interno del servidor al iniciar sesión',500));
     }
+  },
+  // Añade esto para que la ruta GET tenga una función que ejecutar
+  getProfile: async (req, res, next) => {
+    res.status(200).json({ message: "Perfil del usuario (En construcción)" });
   }
 };
 

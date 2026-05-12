@@ -2,14 +2,14 @@
   "name": "prismacrawler",
   "version": "1.0.0",
   "description": "Proyecto de Back-end con Prisma en IronHack!",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
-  "start": "node src/app.js",
-  "dev": "nodemon src/app.js",
-  "test": "jest",
-  "test:watch": "jest --watchAll",
-  "test:coverage": "jest --coverage"
-},
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest",
+    "test:watch": "jest --watchAll",
+    "test:coverage": "jest --coverage"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/iDankest/PrismaCrawler.git"
