@@ -89,23 +89,24 @@ const generateMap = () => {
   const newMap = Array(10).fill().map(() =>
     Array(10).fill().map(() => (Math.random() > 0.8 ? 1 : 0))
   );
-  newMap[5][0] = 0; // Asegurar que la casilla inicial no es pared
+  
 
   const generatedEnemies = [];
   newMap.forEach((row, y) => {
     row.forEach((tile, x) => {
       // Generar enemigos aleatorios
-      if (tile === 0 && Math.random() > 0.9 && !(x === 5 && y === 0)) {
+      if (tile === 0 && Math.random() > 0.4 && !(x === 5 && y === 0)) {
         generatedEnemies.push({
           id: `enemy_${x}_${y}`,
           x, 
           y, 
           hp: 30, 
-          attack: 10, 
+          attack: 100, 
           defense: 2
         });
       }
     });
+    newMap[5][0] = 0; // Asegurar que la casilla inicial no es pared
   });
 
   setMap(newMap);
