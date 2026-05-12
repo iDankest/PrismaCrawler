@@ -1,5 +1,6 @@
 // ./src/index.js
 const express = require('express');
+const cors = require('cors')
 const app = express();
 
 // 1. Importar Rutas
@@ -23,6 +24,8 @@ app.all('*', (req, res, next) => {
 
 // 5. MIDDLEWARE DE ERRORES (Siempre va al final)
 app.use(errorHandler);
+
+app.use(cors())
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}...`));
