@@ -5,8 +5,7 @@ import GameCanvas from "../components/GameCanvas";
 function Game() {
   const [playerPos, setPlayerPos] = useState({ x: 5, y: 0 });
   const [map, setMap] = useState([]);
-
-
+  const [enemies, setEnemies] = useState([]);
 
   const loadMapFromBackend = (mapData) => {
   const newMap = [];
