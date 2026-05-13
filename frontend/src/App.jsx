@@ -4,19 +4,25 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Login from './pages/Login'
 import Game from './pages/Game'
 import { ProtectedRoute } from './components/ProtectedRoute'
-/* import Header from './components/Header' */
+import { useState } from 'react'
 
 function App() {
+  const [items, setItems] = useState([]);
+
+  fetch('/api/game/items')
+    .then(res => res.json())
+    .then(data => setItems(data))
+    .catch(err => console.error(err));
+
   return (
     <Router>
-{/*       <Header /> */}
       <Routes>
         <Route path="/" element={<Login />} />
          <Route 
           path="/game" 
           element={
             <ProtectedRoute>
-              <Game />
+              <Game items={items} />
             </ProtectedRoute>
           } 
         />

@@ -30,6 +30,11 @@ const gameLogicService = { // Implementación sólo IA
     return scores;
   },
 
+  getItems: async () => {
+    const items = await prisma.item.findMany();
+    return items;
+  },
+
 
 
     // ==========================================
