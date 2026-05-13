@@ -61,11 +61,11 @@ export class GameScene extends Phaser.Scene {
         { key: 'enemy', url: Slime, frameWidth: 32, frameHeight: 32 },
         { key: 'enemyAttack', url: SmileAttack, frameWidth: 32, frameHeight: 32 },
         { key: 'chest', url: Cofre, frameWidth: 32, frameHeight: 32 },
-        { key: 'item_sword', url: Espada, frameWidth: 32, frameHeight: 32 },
+        { key: 'item_sword', url: Espada, frameWidth: 64, frameHeight: 64 },
         { key: 'item_beer', url: Beer, frameWidth: 32, frameHeight: 32 },
-        { key: 'item_mug', url: Taza, frameWidth: 32, frameHeight: 32 },
-        { key: 'item_sack', url: Saco, frameWidth: 32, frameHeight: 32 },
-        { key: 'item_potion', url: Potion, frameWidth: 32, frameHeight: 32 }
+        { key: 'item_mug', url: Taza, frameWidth: 64, frameHeight: 64 },
+        { key: 'item_sack', url: Saco, frameWidth: 64, frameHeight: 64 },
+        { key: 'item_potion', url: Potion, frameWidth: 64, frameHeight: 64 }
       ]
 
       for (const config of spriteConfigs) {
@@ -152,7 +152,7 @@ export class GameScene extends Phaser.Scene {
 
     this.anims.create({
       key: 'chest-opening',
-      frames: this.anims.generateFrameNumbers('chest', { start: 0, end: 1 }),
+      frames: this.anims.generateFrameNumbers('chest', { start: 0, end: 3 }),
       frameRate: 10,
       repeat: 0
     })
