@@ -2,6 +2,9 @@
 
 import Phaser from "phaser";
 
+// ==========================================
+// 📦 IMPORTACIÓN DE ASSETS Y DATOS
+// ==========================================
 // IMPORTAR SPRITES
 import Personaje from "../assets/sprites/Personaje.png";
 import PersonajeCaminar from "../assets/sprites/Personaje-Caminar.png";
@@ -142,9 +145,9 @@ export class GameScene extends Phaser.Scene {
     // 2. Calculamos el tamaño de cada "casilla" según las dimensiones del layout
     const rows = mapData.layout.length;
     const cols = mapData.layout[0].length;
-    
+
     // Canvas total de Phaser (640x360) dividido por número de celdas
-    const cellWidth = 640 / cols; 
+    const cellWidth = 640 / cols;
     const cellHeight = 360 / rows;
 
     // 3. Recorremos la matriz del backend
@@ -180,7 +183,13 @@ export class GameScene extends Phaser.Scene {
     obstacle.setStrokeStyle(1, 0x0ea5e9); // Borde más fino para paredes conjuntas
     obstacle.setDepth(5);
 
-    const crystal = this.add.rectangle(x, y, renderW - 4, renderH - 4, 0x3b82f6);
+    const crystal = this.add.rectangle(
+      x,
+      y,
+      renderW - 4,
+      renderH - 4,
+      0x3b82f6,
+    );
     crystal.setAlpha(0.15);
     crystal.setDepth(4);
 
@@ -323,34 +332,39 @@ export class GameScene extends Phaser.Scene {
 
   checkObstacleCollision(x, y, radius = 20) {
     for (let obstacle of this.obstacles) {
-      // Eje X
+      // Eje X: Encontramos el punto del muro más cercano en X (SIN el radio)
       const halfWidth = obstacle.width / 2;
-      const minX = obstacle.x - halfWidth - radius;
-      const maxX = obstacle.x + halfWidth + radius;
+      const minX = obstacle.x - halfWidth;
+      const maxX = obstacle.x + halfWidth;
       const closestX = Phaser.Math.Clamp(x, minX, maxX);
 
-      // Eje Y
+      // Eje Y: Encontramos el punto del muro más cercano en Y (SIN el radio)
       const halfHeight = obstacle.height / 2;
-      const minY = obstacle.y - halfHeight - radius;
-      const maxY = obstacle.y + halfHeight + radius;
+      const minY = obstacle.y - halfHeight;
+      const maxY = obstacle.y + halfHeight;
       const closestY = Phaser.Math.Clamp(y, minY, maxY);
 
+      // Medimos la distancia real
       const dist = Phaser.Math.Distance.Between(x, y, closestX, closestY);
+      
       if (dist < radius) {
-        return true;
+        return true; // Hay colisión
       }
     }
-    return false;
+    return false; // Vía libre
   }
-
+  
+  // =========================================
+  // 🔄 LOOP PRINCIPAL DEL JUEGO (60 FPS)
+  // ==========================================
   update() {
     if (this.gameOver) return;
 
     let isMoving = false;
     let nextX = this.player.x;
     let nextY = this.player.y;
-    const moveSpeed = 3 * this.stats.speedMultiplier;
-
+    const moveSpeed = 1.5 * this.stats.speedMultiplier;
+    // Movimiento
     if (this.keys.W.isDown) {
       nextY -= moveSpeed;
       isMoving = true;
@@ -369,7 +383,7 @@ export class GameScene extends Phaser.Scene {
       isMoving = true;
       this.playerDirection = 1;
     }
-
+    // Ataque
     if (this.keys.SPACE.isDown && !this.isAttacking) {
       this.attack();
     }
@@ -480,7 +494,7 @@ export class GameScene extends Phaser.Scene {
 
     this.updateGameState();
   }
-
+  // Inicia una nueva oleada procedural (Usado a partir del Piso 2) Pendiente de borrado
   startFloor() {
     this.currentFloor++;
     this.floorActive = true;
@@ -498,7 +512,7 @@ export class GameScene extends Phaser.Scene {
       this.spawnEnemy(enemyHpMultiplier, enemyDamageMultiplier);
     }
   }
-
+  // Spawnea un enemigo al azar verificando que no nazca encima de una pared ni muy cerca del jugador
   spawnEnemy(hpMultiplier = 1, damageMultiplier = 1) {
     let x, y, tooClose;
     let attempts = 0;
@@ -546,18 +560,19 @@ export class GameScene extends Phaser.Scene {
   openChest(chest) {
     chest.opened = true;
     chest.sprite.play("chest-opening");
-
+    // Esperar a que acabe la animación (400ms) antes de soltar el item
     this.time.delayedCall(400, () => {
       if (chest.sprite.active) {
         chest.sprite.play("chest-open");
 
         // ✅ Usar DB para obtener item aleatorio
-        const item = getRandomItem();
+        const item = getRandomItem(); // Tira los dados en la BD local de items
         this.spawnItemFromChest(chest.sprite.x, chest.sprite.y, item);
       }
     });
   }
 
+  // Efecto visual cuando un item sale botando del cofre
   spawnItemFromChest(x, y, itemData) {
     const itemSprite = this.add.sprite(x, y, itemData.spriteKey, 0);
     itemSprite.setScale(0.8);
@@ -571,7 +586,7 @@ export class GameScene extends Phaser.Scene {
 
     this.items.push(itemObj);
 
-    // ✅ Animación: item sube y crece
+    // Animación 1: Saltar hacia arriba
     this.tweens.add({
       targets: itemSprite,
       y: y - 50,
@@ -580,7 +595,7 @@ export class GameScene extends Phaser.Scene {
       ease: "Back.out",
     });
 
-    // Rotación mientras sube
+    // Animación 2: Girar sobre si mismo
     this.tweens.add({
       targets: itemSprite,
       rotation: Math.PI * 2,
@@ -588,18 +603,19 @@ export class GameScene extends Phaser.Scene {
       ease: "Linear",
     });
 
-    // Flotación continua después
+    // Animación 3: Quedarse flotando arriba y abajo permanentemente
     this.tweens.add({
       targets: itemSprite,
       y: itemSprite.y - 10,
       duration: 1200,
       delay: 600,
       repeat: -1,
-      yoyo: true,
+      yoyo: true, // Hace que la animación haga ping-pong (sube y baja)
       ease: "Sine.inout",
     });
   }
 
+  // Aplicar las ventajas estadísticas al recoger el item
   collectItem(item) {
     item.sprite.destroy();
 
@@ -646,46 +662,47 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.stats.itemsCollected.push(item.type);
-
+    // Mandar el nuevo inventario a Reac
     if (this.onInventoryUpdate) {
       this.onInventoryUpdate(this.stats.itemsCollected);
     }
   }
 
+  // Ataque del Jugador
   attack() {
     this.isAttacking = true;
     this.player.setTexture("playerAttack");
     this.player.play("attack", true);
-
+    // El daño base es 10 multiplicado por items
     const attackRange = 80;
     const attackDamage = 10 * this.stats.damageMultiplier;
-
+    // Detectar impacto (Hitbox direccional simple basada en distancia)
     this.enemies.forEach((enemy) => {
       const distance = Phaser.Math.Distance.Between(
-        this.player.x + this.playerDirection * 40,
-        this.player.y,
+        this.player.x + this.playerDirection * 40, // Proyecta el ataque hacia adelante
+        this.player.y + this.playerDirection * 10,
         enemy.sprite.x,
         enemy.sprite.y,
       );
 
       if (distance < attackRange) {
         enemy.hp -= attackDamage;
-
+        // Enemigo Muere
         if (enemy.hp <= 0) {
           enemy.sprite.destroy();
           this.enemies = this.enemies.filter((e) => e !== enemy);
           this.stats.kills++;
-
-          if (Math.random() < 0.4) {
-            this.spawnChest(enemy.sprite.x, enemy.sprite.y);
+          // 40% de probabilidad de dropear cofre
+          if (Math.random() < 0.1) {
+            this.spawnChest(enemy.sprite.x, enemy.sprite.y); // Lo quita del array
           }
-
+          // Si era el último enemigo, pasamos al siguiente piso
           if (this.enemies.length === 0) {
             this.floorActive = false;
-
+            // Retraso de 1.5s antes de que aparezcan los nuevos
             this.addTrackedTimer(1500, () => {
               if (!this.gameOver) {
-                // Al morir el último enemigo del mapa del backend, 
+                // Al morir el último enemigo del mapa del backend,
                 // pasamos a Floor 2 que usará la generación procedural
                 this.startFloor();
               }
@@ -695,6 +712,7 @@ export class GameScene extends Phaser.Scene {
       }
     });
 
+    // Resetear animación del enemigo tras 400ms
     this.addTrackedTimer(400, () => {
       if (this.player.active) {
         this.isAttacking = false;
@@ -703,6 +721,9 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  // ==========================================
+  // 🎁 SISTEMA DE ITEMS Y COFRES
+  // ==========================================
   spawnChest(x, y) {
     const chest = this.add.sprite(x, y, "chest", 0);
     chest.play("chest-closed");
@@ -713,7 +734,7 @@ export class GameScene extends Phaser.Scene {
       opened: false,
     });
   }
-
+  // Ataque del Enemigo
   enemyAttack(enemy) {
     if (this.gameOver) return;
 
@@ -725,11 +746,11 @@ export class GameScene extends Phaser.Scene {
     const attackDamage = enemy.damage;
     this.stats.hp -= attackDamage;
     this.player.hp = this.stats.hp;
-
+    // Jugador Muere
     if (this.stats.hp <= 0) {
       this.gameOver = true;
-      this.cancelAllTimers();
-
+      this.cancelAllTimers(); // Detiene cualquier callback en progreso
+      // Avisa a React para que muestre la pantalla de muerte
       if (this.onGameOver) {
         this.onGameOver({
           floor: this.currentFloor,
@@ -742,7 +763,7 @@ export class GameScene extends Phaser.Scene {
       this.scene.pause();
       return;
     }
-
+    // Resetear estado de ataque tras 400ms
     this.addTrackedTimer(400, () => {
       if (enemy.sprite.active) {
         enemy.isAttacking = false;
@@ -751,7 +772,11 @@ export class GameScene extends Phaser.Scene {
       }
     });
   }
+  // ==========================================
+  // 🛠️ UTILIDADES Y LIMPIEZA
+  // ==========================================
 
+  // Comunica los datos constantemente al panel lateral de React
   updateGameState() {
     if (this.onGameStateUpdate) {
       this.onGameStateUpdate({
@@ -766,18 +791,18 @@ export class GameScene extends Phaser.Scene {
       });
     }
   }
-
+  // Wrapper seguro para setTimeout. Evita que un timer salte si el jugador ya ha muerto
   addTrackedTimer(delay, callback) {
     const timer = this.time.delayedCall(delay, () => {
       if (!this.gameOver) {
         callback();
       }
-      this.pendingTimers = this.pendingTimers.filter((t) => t !== timer);
+      this.pendingTimers = this.pendingTimers.filter((t) => t !== timer); // Limpia referencias muertas
     });
     this.pendingTimers.push(timer);
     return timer;
   }
-
+  // Detiene todas las animaciones / callbacks pendientes cuando se acaba la partida
   cancelAllTimers() {
     this.pendingTimers.forEach((timer) => {
       if (timer && timer.elapsed < timer.delay) {
@@ -786,7 +811,7 @@ export class GameScene extends Phaser.Scene {
     });
     this.pendingTimers = [];
   }
-
+  // Método nativo de Phaser al destruir la escena
   shutdown() {
     this.cancelAllTimers();
   }
