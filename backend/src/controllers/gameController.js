@@ -14,8 +14,18 @@ const gameController = {
         return next(new AppError('El ID del mapa debe ser un número válido', 400));
       }
 
+      // 1. Obtenemos el mapa de la base de datos (que viene con textos)
       const map = await gameLogicService.getMap(mapId);
       
+      // 2. Parseamos los textos para convertirlos de nuevo a Array y Objeto
+      if (typeof map.layout === 'string') {
+        map.layout = JSON.parse(map.layout);
+      }
+      if (typeof map.dictionary === 'string') {
+        map.dictionary = JSON.parse(map.dictionary);
+      }
+      
+      // 3. Ahora sí, lo enviamos bien formateado
       res.status(200).json(map);
     } catch (error) {
       next(error);
