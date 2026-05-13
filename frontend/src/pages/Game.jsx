@@ -1,4 +1,4 @@
-// ./frontend/src/pages/Game.jsx
+/* // ./frontend/src/pages/Game.jsx
 import { useState, useEffect } from "react";
 import GameCanvas from "../components/GameCanvas";
 
@@ -243,10 +243,10 @@ const generateMap = () => {
   return (
     <div className="flex h-screen bg-slate-900">
       <div className="flex-1 flex items-center justify-center relative">
-        {/* Pasamos también los enemigos al Canvas por si quieres dibujarlos */}
+        {/* Pasamos también los enemigos al Canvas por si quieres dibujarlos 
         <GameCanvas map={map} playerPos={playerPos} enemies={enemies} onMove={movePlayer} />
         
-        {/* Pantalla de Muerte */}
+        {/* Pantalla de Muerte 
         {playerStats.hp <= 0 && (
           <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-white">
             <h1 className="text-6xl text-red-600 font-bold mb-4">HAS MUERTO</h1>
@@ -263,7 +263,7 @@ const generateMap = () => {
 
       <div className="w-64 bg-blue-900 border-l-4 border-blue-600 p-4">
         <h2 className="text-blue-300 font-bold mb-4">HERO_01</h2>
-        {/* --- NUEVO: UI dinámica enlazada a nuestro estado --- */}
+        {/* --- NUEVO: UI dinámica enlazada a nuestro estado --- *
         <div className="text-blue-200 text-sm space-y-2">
           <p className="font-mono">
             HP: <span className={playerStats.hp < 30 ? "text-red-400 font-bold" : "text-green-400"}>
@@ -281,3 +281,28 @@ const generateMap = () => {
 }
 
 export default Game;
+ */
+
+// .frontend/src/pages/Game.jsx
+
+import GameHeader from '../components/GameHeader'
+import PhaserGame from '../components/PhaserGame'
+
+function Game() {
+  return (
+    <div className="flex flex-col h-screen bg-slate-900">
+      <GameHeader />
+      
+      <div className="flex-1 flex items-center justify-center">
+        <PhaserGame />
+      </div>
+
+      {/* Panel de stats (opcional) */}
+      <div className="bg-blue-900 border-t-4 border-blue-600 p-4">
+        <p className="text-blue-200">HP: 100/100 | XP: 0 | Level: 1</p>
+      </div>
+    </div>
+  )
+}
+
+export default Game
