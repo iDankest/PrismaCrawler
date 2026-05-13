@@ -46,3 +46,17 @@ model Score {
   
   createdAt DateTime @default(now())
 }
+// 4. ITEMS (La base de datos dinámica de objetos)
+model Item {
+  id           Int      @id @default(autoincrement())
+  name         String
+  spriteKey    String   // Coincide con el nombre en Phaser (ej: "item_sword")
+  description  String
+  rarity       String   // "common", "uncommon", "rare"
+  
+  // Cambiamos a 'effects' en plural porque un JSON puede guardar una lista
+  effects      Json     // Guardaremos algo como: [{"type": "heal", "value": 30}]
+  
+  isConsumable Boolean  @default(false)
+  createdAt    DateTime @default(now())
+}

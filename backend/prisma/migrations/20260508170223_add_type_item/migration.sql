@@ -1,2 +1,0 @@
--- CreateEnum
-CREATE TYPE "ItemType" AS ENUM ('WEAPON', 'CONSUMABLE', 'ARMOR', 'KEYS');
