@@ -6,11 +6,13 @@ const prisma = require('../../src/config/db');
 describe('Rutas de Mapas - Game API', () => {
   let adminToken; // Guardaremos el token aquí
 
+    let mapaId;
   beforeAll(async () => {
+
     // 1. Limpiamos la base de datos
     await prisma.map.deleteMany();
     await prisma.user.deleteMany();
-
+    
     // 2. Registramos un usuario de prueba usando tu API
     await request(app)
       .post('/api/users/register')
@@ -63,6 +65,7 @@ describe('Rutas de Mapas - Game API', () => {
     expect(response.status).toBe(201);
     expect(response.body.success).toBe(true);
     expect(response.body.data.name).toBe("Mazmorra de Inicio");
+    mapaId = response.body.data.id;
   });
 
   it('Debería rechazar la creación del mapa si no se envía Token (401)', async () => {
@@ -75,5 +78,20 @@ describe('Rutas de Mapas - Game API', () => {
 
     // Verificamos que tu seguridad funciona y da un error 401
     expect(response.status).toBe(401);
+  });
+
+  it('Debería recibir un mapa', async () => {
+    const response = await request(app).get(`/api/game/map/${mapaId}`);
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      id: mapaId,
+      name: "Mazmorra de Inicio",
+      level: 1,
+      layout: ["######", "#_M__#", "#_D__#", "######"],
+      dictionary: {
+        "M": { "type": "enemy", "name": "Slime", "hp": 30 },
+        "D": { "type": "door" }
+      }
+    });
   });
 });
