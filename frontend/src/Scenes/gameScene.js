@@ -158,14 +158,23 @@ export class GameScene extends Phaser.Scene {
         const posY = y * cellHeight + cellHeight / 2;
 
         if (char === "#") {
-          // Es un muro
+          // Es un muro indestructible
           this.createObstacleAt(posX, posY, cellWidth, cellHeight);
+        } else if (char === "D") {
+          // --- CAMBIO: Detecta la puerta y le pasa 'true' al final ---
+          this.createObstacleAt(posX, posY, cellWidth, cellHeight, true);
+        } else if (char === "r") {
+          // --- CAMBIO: Detecta obstáculos decorativos ---
+          this.createObstacleAt(posX, posY, cellWidth, cellHeight);
+        } else if (char === "T") {
+          // Loot: Spawneamos un cofre directamente
+          this.spawnChest(posX, posY);
         } else if (char === "P") {
           // Posición inicial del Jugador
           this.player.x = posX;
           this.player.y = posY;
         } else if (char === "M") {
-          // Es un enemigo, le pasamos las stats del diccionario o unas por defecto
+          // Es un enemigo
           const stats = mapData.dictionary[char] || { hp: 30, damage: 5 };
           this.spawnEnemyAt(posX, posY, stats);
         }
@@ -174,12 +183,14 @@ export class GameScene extends Phaser.Scene {
   }
 
   // --- NUEVO: MÉTODO PARA CREAR OBSTÁCULOS DINÁMICOS ---
-  createObstacleAt(x, y, w, h) {
+  createObstacleAt(x, y, w, h, isDoor = false) {
     // Para evitar que los muros estén "pegados", les quitamos un poco de margen visual
     const renderW = w + 1; // Ajuste fino para tapar huecos entre grillas
     const renderH = h + 1;
 
-    const obstacle = this.add.rectangle(x, y, renderW, renderH, 0x1e293b);
+    const color = isDoor ? 0x475569 : 0x1e293b;
+    // Si es puerta, le ponemos un color distinto (opcional)
+    const obstacle = this.add.rectangle(x, y, renderW, renderH, color);
     obstacle.setStrokeStyle(1, 0x0ea5e9); // Borde más fino para paredes conjuntas
     obstacle.setDepth(5);
 
@@ -200,6 +211,7 @@ export class GameScene extends Phaser.Scene {
       y: y,
       width: w,
       height: h,
+      isDoor: isDoor
     });
   }
 
@@ -346,14 +358,14 @@ export class GameScene extends Phaser.Scene {
 
       // Medimos la distancia real
       const dist = Phaser.Math.Distance.Between(x, y, closestX, closestY);
-      
+
       if (dist < radius) {
         return true; // Hay colisión
       }
     }
     return false; // Vía libre
   }
-  
+
   // =========================================
   // 🔄 LOOP PRINCIPAL DEL JUEGO (60 FPS)
   // ==========================================
@@ -407,10 +419,24 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (canMove) {
-      this.player.x = Phaser.Math.Clamp(nextX, 32, 608);
-      this.player.y = Phaser.Math.Clamp(nextY, 32, 328);
+      this.player.x = nextX;
+      this.player.y = nextY;
     }
+    // --- NUEVO: Transición de nivel al cruzar la puerta ---
+    // Si la sala está limpia y el jugador sale de los límites de la pantalla (640x360)
+    if (this.enemies.length === 0 && !this.floorActive) {
+      if (this.player.x < 0 || this.player.x > 640 || this.player.y < 0 || this.player.y > 360) {
+        
+        console.log("¡Pasando al Piso 2!");
+        
+        // 1. Reposicionamos al jugador en el centro
+        this.player.x = 320;
+        this.player.y = 180;
 
+        // 2. Iniciamos el siguiente nivel
+        this.startFloor(); 
+      }
+    }
     this.player.scaleX = this.playerDirection;
 
     if (!this.isAttacking) {
@@ -494,7 +520,11 @@ export class GameScene extends Phaser.Scene {
 
     this.updateGameState();
   }
-  // Inicia una nueva oleada procedural (Usado a partir del Piso 2) Pendiente de borrado
+
+  // ==========================================
+  // ⚔️ SISTEMA DE OLEADAS Y COMBATE
+  // ==========================================
+  // Inicia una nueva oleada procedural (Usado a partir del Piso 2)
   startFloor() {
     this.currentFloor++;
     this.floorActive = true;
@@ -512,6 +542,7 @@ export class GameScene extends Phaser.Scene {
       this.spawnEnemy(enemyHpMultiplier, enemyDamageMultiplier);
     }
   }
+
   // Spawnea un enemigo al azar verificando que no nazca encima de una pared ni muy cerca del jugador
   spawnEnemy(hpMultiplier = 1, damageMultiplier = 1) {
     let x, y, tooClose;
@@ -693,20 +724,30 @@ export class GameScene extends Phaser.Scene {
           this.enemies = this.enemies.filter((e) => e !== enemy);
           this.stats.kills++;
           // 40% de probabilidad de dropear cofre
-          if (Math.random() < 0.1) {
-            this.spawnChest(enemy.sprite.x, enemy.sprite.y); // Lo quita del array
-          }
-          // Si era el último enemigo, pasamos al siguiente piso
+          // Si era el último enemigo, ¡LIMPIAMOS LA SALA!
           if (this.enemies.length === 0) {
             this.floorActive = false;
-            // Retraso de 1.5s antes de que aparezcan los nuevos
-            this.addTrackedTimer(1500, () => {
-              if (!this.gameOver) {
-                // Al morir el último enemigo del mapa del backend,
-                // pasamos a Floor 2 que usará la generación procedural
-                this.startFloor();
+
+            // 1. Destruir y filtrar las puertas
+            this.obstacles = this.obstacles.filter((obs) => {
+              if (obs.isDoor) {
+                // Destruimos sus sprites de Phaser
+                obs.sprite.destroy();
+                obs.crystal.destroy();
+                // Lo sacamos del array para que el jugador pueda caminar por ahí
+                return false; 
               }
+              return true; // Mantenemos los muros normales ("#")
             });
+
+            console.log("¡Puertas abiertas!");
+
+            // 2. Probabilidad baja (ej. 25%) de que aparezca un cofre en el centro
+            if (Math.random() < 0.25) {
+              // 320 y 180 equivalen al centro de un canvas de 640x360
+              this.spawnChest(320, 180); 
+              console.log("¡Cofre central generado!");
+            }
           }
         }
       }
