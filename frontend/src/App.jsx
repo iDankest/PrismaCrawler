@@ -1,33 +1,48 @@
 // ./frontend/src/App.jsx
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import api from './api/axios' // Importa tu instancia de Axios
+import api from './api/axios' 
 import Login from './pages/Login'
 import Game from './pages/Game'
+// Importación corregida del Leaderboard
+import Leaderboard from './components/Leaderboard' 
 import { ProtectedRoute } from './components/ProtectedRoute'
 
 function App() {
   const [items, setItems] = useState([]);
 
   useEffect(() => {
-    // Usamos axios para evitar líos de URL y duplicados de /api
+    // Usamos axios para obtener los items iniciales del juego
     api.get('/game/items')
       .then(res => {
-        // Accedemos a .data.data porque tu controller devuelve { success: true, data: [...] }
+        // Accedemos a res.data.data según la estructura de tu controlador
         setItems(res.data.data || []);
       })
       .catch(err => console.error("Error cargando items iniciales:", err.message));
-  }, []); // El array vacío [] hace que solo se ejecute al cargar la web
+  }, []);
 
   return (
     <Router>
       <Routes>
+        {/* Ruta pública de acceso */}
         <Route path="/" element={<Login />} />
+        
+        {/* Ruta principal del juego protegida */}
         <Route 
           path="/game" 
           element={
             <ProtectedRoute>
               <Game items={items} />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* Ruta para el Salón de la Infamia (Leaderboard) */}
+        <Route 
+          path="/leaderboard" 
+          element={
+            <ProtectedRoute>
+              <Leaderboard />
             </ProtectedRoute>
           } 
         />
