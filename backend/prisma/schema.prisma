@@ -38,13 +38,16 @@ model Map {
 
 // 3. PUNTUACIONES (Para el Top 10)
 model Score {
-  id        Int      @id @default(autoincrement())
-  xp        Int      // La experiencia con la que murió el personaje
+  id                Int      @id @default(autoincrement())
+  totalDamageDealt  Int      @default(0) // Daño total a enemigos
+  totalDamageTaken   Int      @default(0) // Daño total recibido
+  floor             Int      @default(1)
+  kills             Int      @default(0)
   
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id])
+  userId            Int
+  user              User     @relation(fields: [userId], references: [id])
   
-  createdAt DateTime @default(now())
+  createdAt         DateTime @default(now())
 }
 // 4. ITEMS (La base de datos dinámica de objetos)
 model Item {
