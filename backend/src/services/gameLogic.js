@@ -21,13 +21,24 @@ const gameLogicService = { // Implementación sólo IA
 
   // Cargar puntuación, topscore, usuarios --> GET
   // 2. Cargar Leaderboard (Top 10 puntuaciones)
-  getTopScores: async () => {
-    const scores = await prisma.score.findMany({
+getTopScores: async () => {
+    return await prisma.score.findMany({
       take: 10,
-      orderBy: { xp: 'desc' },
-      include: { user: { select: { name: true } } } // Traemos el nombre del jugador
+      orderBy: {
+        totalDamageDealt: 'desc' 
+      },
+      include: {
+        user: { 
+          select: { name: true } 
+        }
+      }
     });
-    return scores;
+  },
+
+
+  getItems: async () => {
+    const items = await prisma.item.findMany();
+    return items;
   },
 
 
@@ -36,6 +47,17 @@ const gameLogicService = { // Implementación sólo IA
   // RUTAS DE ADMINISTRADOR (POST / PUT)
   // ==========================================
 
+    saveScore: async (userId, data) => {
+    return await prisma.score.create({
+      data: {
+        userId: userId,
+        totalDamageDealt: data.totalDamageDealt || 0,
+        totalDamageTaken: data.totalDamageTaken || 0,
+        floor: data.floor || 1,
+        kills: data.kills || 0
+      }
+    });
+  },
   // 3. Crear un nuevo mapa en la base de datos
   // Implementar mapas, nuevos items. --> POST
   createMap: async (mapData) => {
@@ -67,9 +89,17 @@ const gameLogicService = { // Implementación sólo IA
       data: newData
     });
     return updatedEnemy;
+  },
+
+  
+ /**
+   * --- LÓGICA DE COMBATE ---
+   */
+  calculateDamage: (baseAtk, multiplier) => {
+    const mult = (multiplier !== undefined && multiplier !== null) ? multiplier : 1;
+    return Math.floor(baseAtk * mult);
   }
-
-
 };
+
 
 module.exports = gameLogicService;

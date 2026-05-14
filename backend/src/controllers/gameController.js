@@ -68,6 +68,19 @@ const gameController = {
       next(error);
     }
   },
+  getItems: async (req, res, next) => {
+    try {
+      const items = await gameLogicService.getItems();
+      
+      res.status(200).json({
+        success: true,
+        data: items
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
 
   // --- CREAR UN MAPA NUEVO (ADMIN) ---
   createMap: async (req, res, next) => {

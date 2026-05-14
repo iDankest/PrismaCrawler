@@ -38,11 +38,28 @@ model Map {
 
 // 3. PUNTUACIONES (Para el Top 10)
 model Score {
-  id        Int      @id @default(autoincrement())
-  xp        Int      // La experiencia con la que murió el personaje
+  id                Int      @id @default(autoincrement())
+  totalDamageDealt  Int      @default(0) // Daño total a enemigos
+  totalDamageTaken   Int      @default(0) // Daño total recibido
+  floor             Int      @default(1)
+  kills             Int      @default(0)
   
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id])
+  userId            Int
+  user              User     @relation(fields: [userId], references: [id])
   
-  createdAt DateTime @default(now())
+  createdAt         DateTime @default(now())
+}
+// 4. ITEMS (La base de datos dinámica de objetos)
+model Item {
+  id           Int      @id @default(autoincrement())
+  name         String
+  spriteKey    String   // Coincide con el nombre en Phaser (ej: "item_sword")
+  description  String
+  rarity       String   // "common", "uncommon", "rare"
+  
+  // Cambiamos a 'effects' en plural porque un JSON puede guardar una lista
+  effects      Json     // Guardaremos algo como: [{"type": "heal", "value": 30}]
+  
+  isConsumable Boolean  @default(false)
+  createdAt    DateTime @default(now())
 }

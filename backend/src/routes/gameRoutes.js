@@ -11,6 +11,7 @@ const verifyToken = require('../middlewares/authMiddleware');
 // El ':id' captura el número de la URL (ej. /map/1) y lo mete en req.params.id
 router.get('/map/:id', gameController.getMap); 
 router.get('/leaderboard', gameController.getTopScores);
+router.get('/items', gameController.getItems);
 
 // --- RUTAS PRIVADAS (Requieren estar logueado) ---
 router.post('/score', verifyToken, gameController.saveScore);

@@ -21,7 +21,7 @@ const handleSubmit = async (e) => {
   console.log("🚀 Intentando login para:", email);
 
   try {
-    const data = await call('/api/users/login', {
+    const data = await call('/users/login', {
       method: 'POST',
       body: { email, password }
     });
