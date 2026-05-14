@@ -74,11 +74,11 @@ export class GameScene extends Phaser.Scene {
           frameHeight: 32,
         },
         { key: "chest", url: Cofre, frameWidth: 32, frameHeight: 32 },
-        { key: "item_sword", url: Espada, frameWidth: 64, frameHeight: 64 },
+        { key: "item_sword", url: Espada, frameWidth: 32, frameHeight: 32 },
         { key: "item_beer", url: Beer, frameWidth: 32, frameHeight: 32 },
-        { key: "item_mug", url: Taza, frameWidth: 64, frameHeight: 64 },
-        { key: "item_sack", url: Saco, frameWidth: 64, frameHeight: 64 },
-        { key: "item_potion", url: Potion, frameWidth: 64, frameHeight: 64 },
+        { key: "item_mug", url: Taza, frameWidth: 32, frameHeight: 32 },
+        { key: "item_sack", url: Saco, frameWidth: 32, frameHeight: 32 },
+        { key: "item_potion", url: Potion, frameWidth: 32, frameHeight: 32 },,
       ];
 
       for (const config of spriteConfigs) {
@@ -211,7 +211,7 @@ export class GameScene extends Phaser.Scene {
       y: y,
       width: w,
       height: h,
-      isDoor: isDoor
+      isDoor: isDoor,
     });
   }
 
@@ -370,6 +370,26 @@ export class GameScene extends Phaser.Scene {
   // 🔄 LOOP PRINCIPAL DEL JUEGO (60 FPS)
   // ==========================================
   update() {
+    // --- NUEVO: Transición de nivel pidiendo mapa al Backend ---
+    if (this.enemies.length === 0 && !this.floorActive) {
+      if (
+        this.player.x < 0 ||
+        this.player.x > 640 ||
+        this.player.y < 0 ||
+        this.player.y > 360
+      ) {
+        console.log("¡Jugador salió! Pidiendo siguiente mapa al backend...");
+
+        // 1. Reposicionamos al jugador para que no entre en un bucle de salida
+        this.player.x = 320;
+        this.player.y = 180;
+
+        // 2. Avisamos a React para que haga el fetch del siguiente mapa
+        if (this.onLevelExit) {
+          this.onLevelExit();
+        }
+      }
+    }
     if (this.gameOver) return;
 
     let isMoving = false;
@@ -425,16 +445,20 @@ export class GameScene extends Phaser.Scene {
     // --- NUEVO: Transición de nivel al cruzar la puerta ---
     // Si la sala está limpia y el jugador sale de los límites de la pantalla (640x360)
     if (this.enemies.length === 0 && !this.floorActive) {
-      if (this.player.x < 0 || this.player.x > 640 || this.player.y < 0 || this.player.y > 360) {
-        
+      if (
+        this.player.x < 0 ||
+        this.player.x > 640 ||
+        this.player.y < 0 ||
+        this.player.y > 360
+      ) {
         console.log("¡Pasando al Piso 2!");
-        
+
         // 1. Reposicionamos al jugador en el centro
         this.player.x = 320;
         this.player.y = 180;
 
         // 2. Iniciamos el siguiente nivel
-        this.startFloor(); 
+        this.startFloor();
       }
     }
     this.player.scaleX = this.playerDirection;
@@ -528,15 +552,23 @@ export class GameScene extends Phaser.Scene {
   startFloor() {
     this.currentFloor++;
     this.floorActive = true;
-
+    // 1. Limpiar enemigos antiguos
     this.enemies.forEach((enemy) => {
       if (enemy.sprite.active) enemy.sprite.destroy();
     });
     this.enemies = [];
 
+    // 2. NUEVO: Limpiar obstáculos antiguos para "restaurar" la sala
+    this.obstacles.forEach((obs) => {
+      obs.sprite.destroy();
+      obs.crystal.destroy();
+    });
+    this.obstacles = [];
+
+    // 4. Spawneo de enemigos (Dificultad escalada)
     const enemyCount = this.enemiesPerFloor + Math.floor(this.currentFloor / 2);
-    const enemyHpMultiplier = 1 + (this.currentFloor - 1) * 0.35;
-    const enemyDamageMultiplier = 1 + (this.currentFloor - 1) * 0.25;
+    const enemyHpMultiplier = 1 + (this.currentFloor - 1) * 0.15;
+    const enemyDamageMultiplier = 1 + (this.currentFloor - 1) * 0.05;
 
     for (let i = 0; i < enemyCount; i++) {
       this.spawnEnemy(enemyHpMultiplier, enemyDamageMultiplier);
@@ -735,7 +767,7 @@ export class GameScene extends Phaser.Scene {
                 obs.sprite.destroy();
                 obs.crystal.destroy();
                 // Lo sacamos del array para que el jugador pueda caminar por ahí
-                return false; 
+                return false;
               }
               return true; // Mantenemos los muros normales ("#")
             });
@@ -745,7 +777,7 @@ export class GameScene extends Phaser.Scene {
             // 2. Probabilidad baja (ej. 25%) de que aparezca un cofre en el centro
             if (Math.random() < 0.25) {
               // 320 y 180 equivalen al centro de un canvas de 640x360
-              this.spawnChest(320, 180); 
+              this.spawnChest(320, 180);
               console.log("¡Cofre central generado!");
             }
           }
