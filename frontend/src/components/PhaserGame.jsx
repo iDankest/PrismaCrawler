@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Phaser from 'phaser'
 import { GameScene } from '../Scenes/gameScene'
-import { GameStatsPanel } from './StatsPanel'
+import { StatsPanel } from './StatsPanel'
 import { InventoryPanel } from './inventoryPanel'
 import { useItemsCache } from '../hooks/useItemsCache'
 import { initializeItemsDB } from '../data/itemsDatabase'
