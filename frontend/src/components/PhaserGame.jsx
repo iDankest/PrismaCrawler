@@ -3,8 +3,10 @@
 import { useEffect, useRef, useState } from 'react'
 import Phaser from 'phaser'
 import { GameScene } from '../Scenes/gameScene'
-import { StatsPanel } from './StatsPanel'
+import { GameStatsPanel } from './StatsPanel'
 import { InventoryPanel } from './inventoryPanel'
+import { useItemsCache } from '../hooks/useItemsCache'
+import { initializeItemsDB } from '../data/itemsDatabase'
 
 function PhaserGame() {
   const gameContainer = useRef(null)
@@ -16,8 +18,16 @@ function PhaserGame() {
   const [gameOver, setGameOver] = useState(false)
   const [finalStats, setFinalStats] = useState(null)
 
+  // ✅ CARGAR ITEMS CON CACHE
+  const { items: cachedItems, loading: itemsLoading, error: itemsError } = useItemsCache()
+
   useEffect(() => {
-    if (!gameContainer.current || gameRef.current) return
+    if (!gameContainer.current || gameRef.current || itemsLoading) return
+
+    // ✅ INICIALIZAR ITEMS DB CON CACHE
+    if (cachedItems) {
+      initializeItemsDB(cachedItems)
+    }
 
     // Crear escena personalizada
     class CustomGameScene extends GameScene {
@@ -62,7 +72,7 @@ function PhaserGame() {
         gameRef.current = null
       }
     }
-  }, [])
+  }, [cachedItems, itemsLoading])
 
   const handleRestart = () => {
     setGameOver(false)
@@ -84,6 +94,28 @@ function PhaserGame() {
 
   return (
     <div className="relative w-full h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 flex items-center justify-center">
+      {/* LOADING */}
+      {itemsLoading && (
+        <div className="fixed inset-0 bg-slate-900/80 flex items-center justify-center z-50">
+          <div className="text-center">
+            <div className="animate-spin mb-4">
+              <div className="h-12 w-12 border-4 border-cyan-500 border-t-transparent rounded-full mx-auto"></div>
+            </div>
+            <p className="text-cyan-400 font-mono text-sm">Cargando items...</p>
+          </div>
+        </div>
+      )}
+
+      {/* ERROR */}
+      {itemsError && (
+        <div className="fixed inset-0 bg-slate-900/80 flex items-center justify-center z-50">
+          <div className="bg-red-900/50 border border-red-500 rounded p-6 max-w-md">
+            <p className="text-red-400 font-mono text-sm">⚠️ Error: {itemsError}</p>
+            <p className="text-slate-300 text-xs mt-2">Usando items locales como fallback</p>
+          </div>
+        </div>
+      )}
+
       {/* CONTENEDOR DEL JUEGO */}
       <div className="relative">
         <div 
@@ -98,7 +130,7 @@ function PhaserGame() {
       {/* PANELS FLOTANTES */}
       {gameState && !gameOver && (
         <>
-          <StatsPanel gameState={gameState} />
+          <GameStatsPanel gameState={gameState} />
           <InventoryPanel inventory={inventory} />
         </>
       )}

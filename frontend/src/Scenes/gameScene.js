@@ -1,8 +1,6 @@
-// src/scenes/gameScene.js
+// src/scenes/gameScene.js - VERSIÓN FINAL CON CACHE
 
 import Phaser from 'phaser'
-
-// IMPORTAR SPRITES
 import Personaje from '../assets/sprites/Personaje.png'
 import PersonajeCaminar from '../assets/sprites/Personaje-Caminar.png'
 import AtaquePJ from '../assets/sprites/AtaquePJ.png'
@@ -14,9 +12,7 @@ import Taza from '../assets/sprites/items/taza.png'
 import Saco from '../assets/sprites/items/saco.png'
 import Potion from '../assets/sprites/items/potion.png'
 import Cofre from '../assets/sprites/items/Cofre.png'
-
-// IMPORTAR DATABASE
-import { ITEMS_DB, getRandomItem } from '../data/itemsDatabase'
+import { getRandomItem } from '../data/itemsDatabase'
 
 export class GameScene extends Phaser.Scene {
   constructor() {
@@ -52,36 +48,29 @@ export class GameScene extends Phaser.Scene {
     this.onInventoryUpdate = null
   }
 
-  async preload() {
-    try {
-      const spriteConfigs = [
-        { key: 'playerIdle', url: Personaje, frameWidth: 64, frameHeight: 64 },
-        { key: 'playerWalk', url: PersonajeCaminar, frameWidth: 64, frameHeight: 64 },
-        { key: 'playerAttack', url: AtaquePJ, frameWidth: 64, frameHeight: 64 },
-        { key: 'enemy', url: Slime, frameWidth: 32, frameHeight: 32 },
-        { key: 'enemyAttack', url: SmileAttack, frameWidth: 32, frameHeight: 32 },
-        { key: 'chest', url: Cofre, frameWidth: 32, frameHeight: 32 },
-        { key: 'item_sword', url: Espada, frameWidth: 64, frameHeight: 64 },
-        { key: 'item_beer', url: Beer, frameWidth: 32, frameHeight: 32 },
-        { key: 'item_mug', url: Taza, frameWidth: 64, frameHeight: 64 },
-        { key: 'item_sack', url: Saco, frameWidth: 64, frameHeight: 64 },
-        { key: 'item_potion', url: Potion, frameWidth: 64, frameHeight: 64 }
-      ]
+  preload() {
+    console.log('⏳ Cargando sprites...')
+    
+    // SPRITES PERSONAJES Y ENEMIGOS
+    this.load.spritesheet('playerIdle', Personaje, { frameWidth: 64, frameHeight: 64 })
+    this.load.spritesheet('playerWalk', PersonajeCaminar, { frameWidth: 64, frameHeight: 64 })
+    this.load.spritesheet('playerAttack', AtaquePJ, { frameWidth: 64, frameHeight: 64 })
+    this.load.spritesheet('enemy', Slime, { frameWidth: 32, frameHeight: 32 })
+    this.load.spritesheet('enemyAttack', SmileAttack, { frameWidth: 32, frameHeight: 32 })
+    this.load.spritesheet('chest', Cofre, { frameWidth: 32, frameHeight: 32 })
 
-      for (const config of spriteConfigs) {
-        await this.load.spritesheet(config.key, config.url, {
-          frameWidth: config.frameWidth,
-          frameHeight: config.frameHeight
-        })
-      }
-    } catch (error) {
-      console.error('Error cargando sprites:', error)
-    }
+    // SPRITES ITEMS
+    this.load.image('item_sword', Espada)
+    this.load.image('item_beer', Beer)
+    this.load.image('item_mug', Taza)
+    this.load.image('item_sack', Saco)
+    this.load.image('item_potion', Potion)
+    
+    console.log('✅ Sprites cargados')
   }
 
   create() {
     this.cameras.main.setBackgroundColor('#0f172a')
-
     this.createAnimations()
 
     this.player = this.add.sprite(320, 180, 'playerIdle', 0)
@@ -103,65 +92,82 @@ export class GameScene extends Phaser.Scene {
     })
 
     this.startFloor()
+    console.log('✅ Juego iniciado')
   }
 
   createAnimations() {
     // Player
-    this.anims.create({
-      key: 'idle',
-      frames: this.anims.generateFrameNumbers('playerIdle', { start: 0, end: 3 }),
-      frameRate: 8,
-      repeat: -1
-    })
+    if (!this.anims.exists('idle')) {
+      this.anims.create({
+        key: 'idle',
+        frames: this.anims.generateFrameNumbers('playerIdle', { start: 0, end: 3 }),
+        frameRate: 8,
+        repeat: -1
+      })
+    }
 
-    this.anims.create({
-      key: 'walk',
-      frames: this.anims.generateFrameNumbers('playerWalk', { start: 0, end: 2 }),
-      frameRate: 12,
-      repeat: -1
-    })
+    if (!this.anims.exists('walk')) {
+      this.anims.create({
+        key: 'walk',
+        frames: this.anims.generateFrameNumbers('playerWalk', { start: 0, end: 2 }),
+        frameRate: 12,
+        repeat: -1
+      })
+    }
 
-    this.anims.create({
-      key: 'attack',
-      frames: this.anims.generateFrameNumbers('playerAttack', { start: 0, end: 3 }),
-      frameRate: 15,
-      repeat: 0
-    })
+    if (!this.anims.exists('attack')) {
+      this.anims.create({
+        key: 'attack',
+        frames: this.anims.generateFrameNumbers('playerAttack', { start: 0, end: 3 }),
+        frameRate: 15,
+        repeat: 0
+      })
+    }
 
     // Enemy
-    this.anims.create({
-      key: 'enemy-idle',
-      frames: this.anims.generateFrameNumbers('enemy', { start: 0, end: 2 }),
-      frameRate: 8,
-      repeat: -1
-    })
+    if (!this.anims.exists('enemy-idle')) {
+      this.anims.create({
+        key: 'enemy-idle',
+        frames: this.anims.generateFrameNumbers('enemy', { start: 0, end: 2 }),
+        frameRate: 8,
+        repeat: -1
+      })
+    }
 
-    this.anims.create({
-      key: 'enemy-attack',
-      frames: this.anims.generateFrameNumbers('enemyAttack', { start: 0, end: 3 }),
-      frameRate: 12,
-      repeat: 0
-    })
+    if (!this.anims.exists('enemy-attack')) {
+      this.anims.create({
+        key: 'enemy-attack',
+        frames: this.anims.generateFrameNumbers('enemyAttack', { start: 0, end: 3 }),
+        frameRate: 12,
+        repeat: 0
+      })
+    }
 
-    // Chest - Solo frame 0 (cerrado) y frame 1 (abierto)
-    this.anims.create({
-      key: 'chest-closed',
-      frames: [{ key: 'chest', frame: 0 }],
-      frameRate: 1
-    })
+    // Chest
+    if (!this.anims.exists('chest-closed')) {
+      this.anims.create({
+        key: 'chest-closed',
+        frames: [{ key: 'chest', frame: 0 }],
+        frameRate: 1
+      })
+    }
 
-    this.anims.create({
-      key: 'chest-opening',
-      frames: this.anims.generateFrameNumbers('chest', { start: 0, end: 3 }),
-      frameRate: 10,
-      repeat: 0
-    })
+    if (!this.anims.exists('chest-opening')) {
+      this.anims.create({
+        key: 'chest-opening',
+        frames: this.anims.generateFrameNumbers('chest', { start: 0, end: 1 }),
+        frameRate: 10,
+        repeat: 0
+      })
+    }
 
-    this.anims.create({
-      key: 'chest-open',
-      frames: [{ key: 'chest', frame: 1 }],
-      frameRate: 1
-    })
+    if (!this.anims.exists('chest-open')) {
+      this.anims.create({
+        key: 'chest-open',
+        frames: [{ key: 'chest', frame: 1 }],
+        frameRate: 1
+      })
+    }
   }
 
   createDungeonObstacles() {
@@ -200,9 +206,7 @@ export class GameScene extends Phaser.Scene {
       const closestY = Phaser.Math.Clamp(y, obstacle.y - obstacle.height / 2 - radius, obstacle.y + obstacle.height / 2 + radius)
       
       const dist = Phaser.Math.Distance.Between(x, y, closestX, closestY)
-      if (dist < radius) {
-        return true
-      }
+      if (dist < radius) return true
     }
     return false
   }
@@ -215,41 +219,20 @@ export class GameScene extends Phaser.Scene {
     let nextY = this.player.y
     const moveSpeed = 3 * this.stats.speedMultiplier
 
-    if (this.keys.W.isDown) {
-      nextY -= moveSpeed
-      isMoving = true
-    }
-    if (this.keys.S.isDown) {
-      nextY += moveSpeed
-      isMoving = true
-    }
-    if (this.keys.A.isDown) {
-      nextX -= moveSpeed
-      isMoving = true
-      this.playerDirection = -1
-    }
-    if (this.keys.D.isDown) {
-      nextX += moveSpeed
-      isMoving = true
-      this.playerDirection = 1
-    }
+    if (this.keys.W.isDown) { nextY -= moveSpeed; isMoving = true }
+    if (this.keys.S.isDown) { nextY += moveSpeed; isMoving = true }
+    if (this.keys.A.isDown) { nextX -= moveSpeed; isMoving = true; this.playerDirection = -1 }
+    if (this.keys.D.isDown) { nextX += moveSpeed; isMoving = true; this.playerDirection = 1 }
 
-    if (this.keys.SPACE.isDown && !this.isAttacking) {
-      this.attack()
-    }
+    if (this.keys.SPACE.isDown && !this.isAttacking) this.attack()
 
     let canMove = true
-    
     this.enemies.forEach((enemy) => {
       const distance = Phaser.Math.Distance.Between(nextX, nextY, enemy.sprite.x, enemy.sprite.y)
-      if (distance < 35) {
-        canMove = false
-      }
+      if (distance < 35) canMove = false
     })
 
-    if (this.checkObstacleCollision(nextX, nextY, 24)) {
-      canMove = false
-    }
+    if (this.checkObstacleCollision(nextX, nextY, 24)) canMove = false
 
     if (canMove) {
       this.player.x = Phaser.Math.Clamp(nextX, 32, 608)
@@ -273,13 +256,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.enemies.forEach((enemy) => {
-      const distance = Phaser.Math.Distance.Between(
-        this.player.x,
-        this.player.y,
-        enemy.sprite.x,
-        enemy.sprite.y
-      )
-
+      const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, enemy.sprite.x, enemy.sprite.y)
       const currentTime = this.time.now
 
       if (distance < 50 && !enemy.isAttacking && currentTime - enemy.lastAttackTime > enemy.attackCooldown) {
@@ -287,12 +264,7 @@ export class GameScene extends Phaser.Scene {
       }
 
       if (distance > 40 && distance < 200 && !enemy.isAttacking) {
-        const angle = Phaser.Math.Angle.Between(
-          enemy.sprite.x,
-          enemy.sprite.y,
-          this.player.x,
-          this.player.y
-        )
+        const angle = Phaser.Math.Angle.Between(enemy.sprite.x, enemy.sprite.y, this.player.x, this.player.y)
         enemy.sprite.x += Math.cos(angle) * 0.8
         enemy.sprite.y += Math.sin(angle) * 0.8
 
@@ -330,9 +302,7 @@ export class GameScene extends Phaser.Scene {
     this.currentFloor++
     this.floorActive = true
     
-    this.enemies.forEach(enemy => {
-      if (enemy.sprite.active) enemy.sprite.destroy()
-    })
+    this.enemies.forEach(enemy => { if (enemy.sprite.active) enemy.sprite.destroy() })
     this.enemies = []
 
     const enemyCount = this.enemiesPerFloor + Math.floor(this.currentFloor / 2)
@@ -345,8 +315,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   spawnEnemy(hpMultiplier = 1, damageMultiplier = 1) {
-    let x, y, tooClose
-    let attempts = 0
+    let x, y, tooClose, attempts = 0
 
     do {
       attempts++
@@ -355,17 +324,9 @@ export class GameScene extends Phaser.Scene {
       y = Phaser.Math.Between(80, 280)
 
       const distToPlayer = Phaser.Math.Distance.Between(x, y, 320, 180)
-      if (distToPlayer < 120) {
-        tooClose = true
-      }
-      
-      if (this.checkObstacleCollision(x, y, 30)) {
-        tooClose = true
-      }
-      
-      if (attempts > 50) {
-        tooClose = false
-      }
+      if (distToPlayer < 120) tooClose = true
+      if (this.checkObstacleCollision(x, y, 30)) tooClose = true
+      if (attempts > 50) tooClose = false
     } while (tooClose)
 
     const enemy = this.add.sprite(x, y, 'enemy', 0)
@@ -396,7 +357,6 @@ export class GameScene extends Phaser.Scene {
       if (chest.sprite.active) {
         chest.sprite.play('chest-open')
         
-        // ✅ Usar DB para obtener item aleatorio
         const item = getRandomItem()
         this.spawnItemFromChest(chest.sprite.x, chest.sprite.y, item)
       }
@@ -416,7 +376,6 @@ export class GameScene extends Phaser.Scene {
 
     this.items.push(itemObj)
 
-    // ✅ Animación: item sube y crece
     this.tweens.add({
       targets: itemSprite,
       y: y - 50,
@@ -425,7 +384,6 @@ export class GameScene extends Phaser.Scene {
       ease: 'Back.out'
     })
 
-    // Rotación mientras sube
     this.tweens.add({
       targets: itemSprite,
       rotation: Math.PI * 2,
@@ -433,49 +391,52 @@ export class GameScene extends Phaser.Scene {
       ease: 'Linear'
     })
 
-    // Flotación continua después
-    this.tweens.add({
-      targets: itemSprite,
-      y: itemSprite.y - 10,
-      duration: 1200,
-      delay: 600,
-      repeat: -1,
-      yoyo: true,
-      ease: 'Sine.inout'
+    this.time.delayedCall(600, () => {
+      if (itemSprite.active) {
+        this.tweens.add({
+          targets: itemSprite,
+          y: y - 60,
+          duration: 1200,
+          repeat: -1,
+          yoyo: true,
+          ease: 'Sine.inout'
+        })
+      }
     })
   }
 
   collectItem(item) {
     item.sprite.destroy()
     
-    // ✅ Aplicar efecto del item según su tipo
-    const effect = item.data.effect
-    
-    switch(effect.type) {
-      case 'damageMultiplier':
-        this.stats.damageMultiplier *= effect.value
-        console.log(`⚔️ Damage increased to ${(this.stats.damageMultiplier * 100).toFixed(0)}%`)
-        break
-      case 'attackSpeedMultiplier':
-        this.stats.attackSpeedMultiplier *= effect.value
-        console.log(`⚡ Attack speed increased to ${(this.stats.attackSpeedMultiplier * 100).toFixed(0)}%`)
-        break
-      case 'speedMultiplier':
-        this.stats.speedMultiplier *= effect.value
-        console.log(`💨 Movement speed increased to ${(this.stats.speedMultiplier * 100).toFixed(0)}%`)
-        break
-      case 'maxHpBoost':
-        this.stats.maxHp += effect.value
-        this.stats.hp = Math.min(this.stats.hp + effect.value, this.stats.maxHp)
-        this.player.hp = this.stats.hp
-        this.player.maxHp = this.stats.maxHp
-        console.log(`❤️ Max HP increased to ${this.stats.maxHp}`)
-        break
-      case 'heal':
-        this.stats.hp = Math.min(this.stats.hp + effect.value, this.stats.maxHp)
-        this.player.hp = this.stats.hp
-        console.log(`💚 Healed for ${effect.value} HP`)
-        break
+    if (item.data.effects && Array.isArray(item.data.effects)) {
+      item.data.effects.forEach(effect => {
+        switch(effect.type) {
+          case 'damageMultiplier':
+            this.stats.damageMultiplier *= effect.value
+            console.log(`⚔️ Damage: ${(this.stats.damageMultiplier).toFixed(2)}x`)
+            break
+          case 'attackSpeedMultiplier':
+            this.stats.attackSpeedMultiplier *= effect.value
+            console.log(`⚡ AttackSpeed: ${(this.stats.attackSpeedMultiplier).toFixed(2)}x`)
+            break
+          case 'speedMultiplier':
+            this.stats.speedMultiplier *= effect.value
+            console.log(`💨 Speed: ${(this.stats.speedMultiplier).toFixed(2)}x`)
+            break
+          case 'maxHpBoost':
+            this.stats.maxHp += effect.value
+            this.stats.hp = Math.min(this.stats.hp + effect.value, this.stats.maxHp)
+            this.player.hp = this.stats.hp
+            this.player.maxHp = this.stats.maxHp
+            console.log(`❤️ MaxHP: ${this.stats.maxHp}`)
+            break
+          case 'heal':
+            this.stats.hp = Math.min(this.stats.hp + effect.value, this.stats.maxHp)
+            this.player.hp = this.stats.hp
+            console.log(`💚 Healed: +${effect.value}`)
+            break
+        }
+      })
     }
     
     this.stats.itemsCollected.push(item.type)
@@ -488,7 +449,7 @@ export class GameScene extends Phaser.Scene {
   attack() {
     this.isAttacking = true
     this.player.setTexture('playerAttack')
-    this.player.play('attack', true)
+    this.player.play('attack')
 
     const attackRange = 80
     const attackDamage = 10 * this.stats.damageMultiplier
@@ -539,10 +500,7 @@ export class GameScene extends Phaser.Scene {
     chest.play('chest-closed')
     chest.setDepth(40)
     
-    this.chests.push({
-      sprite: chest,
-      opened: false
-    })
+    this.chests.push({ sprite: chest, opened: false })
   }
 
   enemyAttack(enemy) {
@@ -551,7 +509,7 @@ export class GameScene extends Phaser.Scene {
     enemy.isAttacking = true
     enemy.lastAttackTime = this.time.now
     enemy.sprite.setTexture('enemyAttack')
-    enemy.sprite.play('enemy-attack', true)
+    enemy.sprite.play('enemy-attack')
 
     const attackDamage = enemy.damage
     this.stats.hp -= attackDamage
@@ -600,9 +558,7 @@ export class GameScene extends Phaser.Scene {
 
   addTrackedTimer(delay, callback) {
     const timer = this.time.delayedCall(delay, () => {
-      if (!this.gameOver) {
-        callback()
-      }
+      if (!this.gameOver) callback()
       this.pendingTimers = this.pendingTimers.filter(t => t !== timer)
     })
     this.pendingTimers.push(timer)

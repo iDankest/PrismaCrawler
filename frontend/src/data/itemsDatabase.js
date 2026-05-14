@@ -1,124 +1,74 @@
 // src/data/itemsDatabase.js
 
-import api from '../api/axios'
-
 /**
- * ✅ ITEMS LOCALES (FALLBACK si Supabase no responde)
+ * 💾 ITEMS LOCALES (FALLBACK cuando no hay conexión)
  */
-export const LOCAL_ITEMS_DB = {
+export const LOCAL_ITEMS = {
   item_sword: {
     id: 'item_sword',
     name: 'Iron Sword',
-    icon: '⚔️',
     description: '+50% Damage',
     rarity: 'rare',
-    color: 0xFF6B6B,
     effects: [{ type: 'damageMultiplier', value: 1.5 }],
-    spriteKey: 'item_sword'
+    spriteKey: 'item_sword',
+    consumable: false
   },
   item_beer: {
     id: 'item_beer',
     name: 'Ale of Haste',
-    icon: '🍺',
     description: '+30% Attack Speed',
     rarity: 'uncommon',
-    color: 0xFFB347,
     effects: [{ type: 'attackSpeedMultiplier', value: 1.3 }],
-    spriteKey: 'item_beer'
+    spriteKey: 'item_beer',
+    consumable: false
   },
   item_mug: {
     id: 'item_mug',
     name: 'Mug of Swiftness',
-    icon: '🍵',
     description: '+40% Movement Speed',
     rarity: 'uncommon',
-    color: 0x87CEEB,
     effects: [{ type: 'speedMultiplier', value: 1.4 }],
-    spriteKey: 'item_mug'
+    spriteKey: 'item_mug',
+    consumable: false
   },
   item_sack: {
     id: 'item_sack',
     name: 'Sack of Vitality',
-    icon: '🎒',
     description: '+50 Max HP',
     rarity: 'common',
-    color: 0xB8860B,
     effects: [{ type: 'maxHpBoost', value: 50 }],
-    spriteKey: 'item_sack'
+    spriteKey: 'item_sack',
+    consumable: false
   },
   item_potion: {
     id: 'item_potion',
     name: 'Health Potion',
-    icon: '🧪',
     description: 'Restore 30 HP',
     rarity: 'common',
-    color: 0xFF1493,
     effects: [{ type: 'heal', value: 30 }],
     spriteKey: 'item_potion',
     consumable: true
-  },
-  item_tea: {
-    id: 'item_tea',
-    name: 'Magical Tea',
-    icon: '🍃',
-    description: '+10% Movement Speed',
-    rarity: 'common',
-    color: 0x4EAF4E,
-    effects: [{ type: 'speedMultiplier', value: 1.1 }],
-    spriteKey: 'item_tea'
   }
 }
 
 /**
- * ✅ ESTADO GLOBAL DE ITEMS (sincronizado con DB)
+ * 🎲 ESTADO GLOBAL
  */
-let ITEMS_DB = { ...LOCAL_ITEMS_DB }
+let ITEMS_DB = { ...LOCAL_ITEMS }
 
 /**
- * 📡 CARGAR ITEMS DESDE SUPABASE
+ * 📌 INICIALIZAR CON ITEMS CACHEADOS (llamado desde PhaserGame)
  */
-export const loadItemsFromDatabase = async () => {
-  try {
-    console.log('📡 Cargando items desde Supabase...')
-    
-    // 1. Hacer request a tu backend
-    const response = await api.get('/game/items')
-    
-    // 2. Tu controller devuelve { success: true, data: [...] }
-    const dbItems = response.data.data || []
-    
-    if (dbItems.length === 0) {
-      console.warn('⚠️ No hay items en la BD, usando items locales')
-      return ITEMS_DB
-    }
-    
-    // 3. Convertir items de DB al formato que espera Phaser
-    const itemsMap = {}
-    dbItems.forEach(item => {
-      itemsMap[item.spriteKey] = {
-        id: item.id,
-        name: item.name,
-        icon: getIconForItem(item.spriteKey),
-        description: item.description,
-        rarity: item.rarity,
-        color: getRarityColor(item.rarity),
-        effects: item.effects || [], // Ya viene del JSON en la DB
-        spriteKey: item.spriteKey,
-        consumable: item.isConsumable || false
-      }
-    })
-    
-    // 4. Guardar en variable global
-    ITEMS_DB = itemsMap
-    console.log('✅ Items cargados desde Supabase:', Object.keys(ITEMS_DB))
-    
-    return ITEMS_DB
-  } catch (error) {
-    console.error('❌ Error cargando items desde BD:', error.message)
-    console.warn('⚠️ Usando items locales como fallback')
-    ITEMS_DB = { ...LOCAL_ITEMS_DB }
-    return ITEMS_DB
+export const initializeItemsDB = (cachedItems) => {
+  if (cachedItems && Object.keys(cachedItems).length > 0) {
+    ITEMS_DB = cachedItems
+    console.log('✅ ItemsDB inicializado con cache')
+    return
   }
+  
+  // Si no hay cache, usar locales
+  ITEMS_DB = { ...LOCAL_ITEMS }
+  console.log('⚠️ ItemsDB usando items locales')
 }
 
 /**
@@ -127,8 +77,8 @@ export const loadItemsFromDatabase = async () => {
 export const getRandomItem = () => {
   const itemKeys = Object.keys(ITEMS_DB)
   if (itemKeys.length === 0) {
-    console.error('❌ No hay items cargados')
-    return LOCAL_ITEMS_DB.item_potion // Fallback
+    console.warn('⚠️ No items disponibles, usando potion')
+    return LOCAL_ITEMS.item_potion
   }
   
   const randomKey = itemKeys[Math.floor(Math.random() * itemKeys.length)]
@@ -136,38 +86,20 @@ export const getRandomItem = () => {
 }
 
 /**
- * 📋 OBTENER TODOS LOS ITEMS
+ * 📋 OBTENER UN ITEM POR SPRITEKEY
+ */
+export const getItemBySpriteKey = (spriteKey) => {
+  return ITEMS_DB[spriteKey] || LOCAL_ITEMS.item_potion
+}
+
+/**
+ * 📋 OBTENER TODOS
  */
 export const getAllItems = () => {
   return Object.values(ITEMS_DB)
 }
 
 /**
- * 🎨 HELPERS
- */
-const getIconForItem = (spriteKey) => {
-  const iconMap = {
-    'item_sword': '⚔️',
-    'item_beer': '🍺',
-    'item_mug': '☕',
-    'item_tea': '🍃',
-    'item_sack': '🎒',
-    'item_potion': '🧪'
-  }
-  return iconMap[spriteKey] || '📦'
-}
-
-const getRarityColor = (rarity) => {
-  const colorMap = {
-    'common': 0x808080,
-    'uncommon': 0x0ea5e9,
-    'rare': 0xfbbf24,
-    'epic': 0xd946ef
-  }
-  return colorMap[rarity] || 0xffffff
-}
-
-/**
- * ✅ EXPORTAR LA DB GLOBAL
+ * 📤 EXPORTAR DB GLOBAL
  */
 export { ITEMS_DB }
