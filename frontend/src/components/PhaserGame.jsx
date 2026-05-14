@@ -7,11 +7,13 @@ import { GameStatsPanel } from './StatsPanel'
 import { InventoryPanel } from './inventoryPanel'
 import { useItemsCache } from '../hooks/useItemsCache'
 import { initializeItemsDB } from '../data/itemsDatabase'
+import { useNavigate } from 'react-router-dom'
 
 function PhaserGame() {
   const gameContainer = useRef(null)
   const gameRef = useRef(null)
   const sceneRef = useRef(null)
+  const navigate = useNavigate()
 
   const [gameState, setGameState] = useState(null)
   const [inventory, setInventory] = useState([])
@@ -89,7 +91,7 @@ function PhaserGame() {
   }
 
   const handleViewLeaderboard = () => {
-    console.log('Navigate to leaderboard')
+    navigate('/leaderboard')
   }
 
   return (
