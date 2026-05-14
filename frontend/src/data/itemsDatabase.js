@@ -4,7 +4,7 @@
  * 💾 ITEMS LOCALES (FALLBACK cuando no hay conexión)
  */
 export const LOCAL_ITEMS = {
-  item_sword: {
+  /* item_sword: {
     id: 'item_sword',
     name: 'Iron Sword',
     description: '+50% Damage',
@@ -48,7 +48,7 @@ export const LOCAL_ITEMS = {
     effects: [{ type: 'heal', value: 30 }],
     spriteKey: 'item_potion',
     consumable: true
-  }
+  } */
 }
 
 /**

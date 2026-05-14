@@ -58,10 +58,10 @@ async function main() {
     {
       name: "Sack of Weight",
       spriteKey: "item_sack",
-      description: "-10% Speed, +50 HP",
+      description: "-50% Speed, +50 HP",
       rarity: "common",
       effects: [
-        { type: "speedMultiplier", value: 0.9 },
+        { type: "speedMultiplier", value: 0.5 },
         { type: "maxHpBoost", value: 50.0 }
       ],
       isConsumable: false,
