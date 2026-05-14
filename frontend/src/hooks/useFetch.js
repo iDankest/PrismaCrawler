@@ -1,26 +1,30 @@
+// src/hooks/useFetch.js
 import { useState, useEffect } from 'react';
+import api from '../api/axios'; // Importamos tu instancia de Axios
 
-export const useFetch = (url) => {
+export const useFetch = (endpoint) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // Definimos la función asíncrona dentro del efecto
     const fetchData = async () => {
       try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Error en la petición');
-        const result = await response.json();
-        setData(result);
+        setLoading(true);
+        // Con Axios, la respuesta ya viene parseada en .data
+        const response = await api.get(endpoint);
+        setData(response.data);
       } catch (err) {
-        setError(err.message);
+        // Capturamos el mensaje de error del backend o el de Axios
+        setError(err.response?.data?.message || err.message);
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [url]);
+  }, [endpoint]); // Si el endpoint cambia, se vuelve a ejecutar
 
   return { data, loading, error };
 };

@@ -22,6 +22,7 @@ app.use(express.json()); // Permite a Express entender los JSON que mandamos en 
 app.use('/api/users', userRoutes);
 app.use('/api/game', gameRoutes);
 
+
 // 7. Manejador de rutas no encontradas (404)
 app.use((req, res, next) => {
   next(new AppError(`No se puede encontrar ${req.originalUrl} en este servidor!`, 404));

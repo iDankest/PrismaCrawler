@@ -1,24 +1,29 @@
 // ./frontend/src/App.jsx
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import api from './api/axios' // Importa tu instancia de Axios
 import Login from './pages/Login'
 import Game from './pages/Game'
 import { ProtectedRoute } from './components/ProtectedRoute'
-import { useState } from 'react'
 
 function App() {
   const [items, setItems] = useState([]);
 
-  fetch('/api/game/items')
-    .then(res => res.json())
-    .then(data => setItems(data))
-    .catch(err => console.error(err));
+  useEffect(() => {
+    // Usamos axios para evitar líos de URL y duplicados de /api
+    api.get('/game/items')
+      .then(res => {
+        // Accedemos a .data.data porque tu controller devuelve { success: true, data: [...] }
+        setItems(res.data.data || []);
+      })
+      .catch(err => console.error("Error cargando items iniciales:", err.message));
+  }, []); // El array vacío [] hace que solo se ejecute al cargar la web
 
   return (
     <Router>
       <Routes>
         <Route path="/" element={<Login />} />
-         <Route 
+        <Route 
           path="/game" 
           element={
             <ProtectedRoute>
