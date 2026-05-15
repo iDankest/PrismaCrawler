@@ -70,6 +70,7 @@ El frontend desacopla la lógica de la Interfaz de Usuario (React) de las rutina
 - **Orquestador UI y Puente HTTP (`Game.jsx` & `PhaserGame.jsx`)**: Gestionan el HUD flotante y los modales. Actúan como puente de red haciendo `fetch` a la API para descargar el mapa actual y el catálogo de objetos de PostgreSQL. Al morir el jugador, capturan las estadísticas y las envían a `/api/game/score`, inyectando el token JWT en las cabeceras para validar la identidad.
 - **Caché Local y Estado (`itemsDatabase.js`)**: Base de datos en memoria que recibe la configuración del backend y la inyecta a Phaser, permitiendo consultar los multiplicadores estadísticos en tiempo real sin latencia de red.
 - **Gestión de Assets (`gameScene.js`)**: Entorno de jugabilidad. Emplea el `Loader` de Phaser para cargar *spritesheets*, dividir imágenes en mosaicos (ej: indexación de texturas de 32x32 píxeles) y reproducir animaciones de ataque y movimiento cuadro por cuadro.
+- **Gestión Reactiva del Estado (GameState)**: Sistema de sincronización unidireccional optimizado. El motor gráfico rastrea la experiencia, atributos e inventario (`this.stats`), y delega las actualizaciones a React mediante *callbacks* asíncronos evaluando mutaciones del estado (evitando re-renderizados innecesarios a 60 FPS).
 
 ---
 
@@ -90,6 +91,16 @@ El core jugable exprime la API del framework **Phaser 4**, optimizando el rendim
 ### 🔗 Comunicación con el Backend y Lógica
 - **Paginación de Niveles (*Room Clearing*)**: React inyecta la matriz del mapa JSON extraída de Node.js a Phaser. Al eliminar a todos los enemigos, el motor gráfico destruye las "puertas". Cuando el jugador sale de la pantalla, Phaser lanza el *callback* `onLevelExit`, alertando a React para solicitar el siguiente nivel a la API mediante `fetch` sin destruir el canvas.
 - **Persistencia y PostgreSQL**: Al sufrir un *Game Over*, Phaser compila estadísticas completas de la sesión (HP, XP, multiplicadores, piso alcanzado). React intercepta esta información y efectúa un `POST` seguro (JWT) a la base de datos, reflejándolo al instante en la pantalla de *Rankings Globales*.
+
+---
+
+## Despliegue e Integración Externa
+
+Para garantizar la alta disponibilidad y cumplir con los estándares de arquitectura moderna, el proyecto integra servicios externos en la nube:
+
+- **Base de Datos Remota (Supabase)**: La persistencia de datos relacional (Usuarios, Matrices de Mapas, Catálogo de Ítems y Récords) está delegada a una instancia de **PostgreSQL** alojada externamente en [Supabase](https://supabase.com/). La comunicación se realiza de forma segura a través de Prisma ORM empleando cadenas de conexión protegidas (`DATABASE_URL`).
+- **Cloud Hosting del Servidor (Render)**: La API REST de Node.js / Express se encuentra completamente desplegada y en producción utilizando los servicios de *Web Services* de Render.
+- **Conexión Dinámica Cliente-Servidor**: El entorno de Vite en el frontend está configurado para consumir de forma transparente la API local durante el desarrollo y realizar las peticiones HTTP (`fetch`) al servidor externo en Render durante la producción mediante la inyección de la variable de entorno `VITE_API_URL`.
 
 ---
 
