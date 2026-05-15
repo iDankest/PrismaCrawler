@@ -43,6 +43,7 @@ model Score {
   totalDamageTaken   Int      @default(0) // Daño total recibido
   floor             Int      @default(1)
   kills             Int      @default(0)
+  xp                Int      @default(0) // ¡Vuelve la experiencia!
   
   userId            Int
   user              User     @relation(fields: [userId], references: [id])

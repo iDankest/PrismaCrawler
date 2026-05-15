@@ -49,20 +49,19 @@ const gameController = {
   // --- GUARDAR PUNTUACIÓN (XP) AL MORIR ---
   saveScore: async (req, res, next) => {
     try {
-      const { xp } = req.body;
       const userId = req.user.userId; // Obtenido del token JWT gracias al authMiddleware
+      const scoreData = req.body;
 
-      if (xp === undefined || typeof xp !== 'number') {
-        return next(new AppError('La puntuación (xp) es obligatoria y debe ser un número', 400));
+      if (scoreData.floor === undefined || scoreData.xp === undefined) {
+        return next(new AppError('El piso (floor) y la experiencia (xp) son obligatorios', 400));
       }
 
-      // (Nota: Esta función saveScore habría que añadirla a gameLogic.js para que hable con Prisma)
-      // const newScore = await gameLogicService.saveScore(userId, xp);
+      const newScore = await gameLogicService.saveScore(userId, scoreData);
 
       res.status(201).json({
         success: true,
         message: 'Puntuación guardada correctamente',
-        // data: newScore
+        data: newScore
       });
     } catch (error) {
       next(error);

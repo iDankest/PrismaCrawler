@@ -24,9 +24,11 @@ const gameLogicService = { // Implementación sólo IA
 getTopScores: async () => {
     return await prisma.score.findMany({
       take: 10,
-      orderBy: {
-        totalDamageDealt: 'desc' 
-      },
+      orderBy: [
+        { floor: 'desc' },
+        { xp: 'desc' },
+        { kills: 'desc' }
+      ],
       include: {
         user: { 
           select: { name: true } 
@@ -37,8 +39,29 @@ getTopScores: async () => {
 
 
   getItems: async () => {
-    const items = await prisma.item.findMany();
-    return items;
+    // Retornamos un array local (Opción 2 - Sin Base de Datos)
+    return [
+      {
+        id: 'item_sword',
+        name: 'Iron Sword',
+        description: '+50% Damage',
+        rarity: 'rare',
+        color: 0xFF6B6B,
+        effects: [{ type: 'damageMultiplier', value: 1.5 }],
+        spriteKey: 'item_sword',
+        consumable: false
+      },
+      {
+        id: 'item_potion',
+        name: 'Health Potion',
+        description: 'Restore 30 HP',
+        rarity: 'common',
+        color: 0xFF1493,
+        effects: [{ type: 'heal', value: 30 }],
+        spriteKey: 'item_potion',
+        consumable: true
+      }
+    ];
   },
 
 
@@ -51,10 +74,11 @@ getTopScores: async () => {
     return await prisma.score.create({
       data: {
         userId: userId,
+        floor: data.floor || 1,
+        kills: data.kills || 0,
         totalDamageDealt: data.totalDamageDealt || 0,
         totalDamageTaken: data.totalDamageTaken || 0,
-        floor: data.floor || 1,
-        kills: data.kills || 0
+        xp: data.xp || 0
       }
     });
   },

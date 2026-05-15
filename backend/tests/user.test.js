@@ -5,9 +5,12 @@ const prisma = require('../src/config/db.js'); // Importamos Prisma para limpiar
 
 describe('Rutas de Usuario - Autenticación', () => {
   
+  let authToken; // Añadimos la variable aquí para poder usarla entre tests
+
   // 1. ANTES DE TODOS LOS TESTS: Limpiamos la base de datos de pruebas
   beforeAll(async () => {
     // Borramos todos los usuarios para que la prueba sea siempre predecible
+    await prisma.score.deleteMany();
     await prisma.user.deleteMany();
   });
 
@@ -91,10 +94,13 @@ describe('Rutas de Usuario - Autenticación', () => {
   });
   it('Debería poder acceder a una ruta protegida con su token', async () => {
     const response = await request(app)
-      .post('/api/scores')
+      .post('/api/game/score')
       // Aquí enviamos el token que guardamos durante el Login
       .set('Authorization', `Bearer ${authToken}`) 
-      .send({ xp: 500 });
+      .send({ floor: 5, kills: 20, xp: 500, totalDamageDealt: 1000 });
+
+    // 👇 EL TRUCO: Imprimimos la respuesta para visualizar el error real del backend
+    console.log("🕵️ Error detallado del servidor:", response.body);
 
     expect(response.status).toBe(201);
   });
