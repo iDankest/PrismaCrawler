@@ -171,7 +171,7 @@ function PhaserGame() {
   }
 
   return (
-    <div className="relative w-full h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 flex items-center justify-center">
+    <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 flex items-center justify-center">
       {/* CONTENEDOR DEL JUEGO */}
       <div className="relative">
         <div
