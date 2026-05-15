@@ -6,58 +6,54 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL") // <-- AÑADE ESTA LÍNEA
+  directUrl = env("DIRECT_URL")
 }
 
-// 1. USUARIOS (Login y Registro)
+// --- MODELO DE USUARIOS (Autenticación y Perfiles) ---
 model User {
   id       Int      @id @default(autoincrement())
   email    String   @unique
   password String
   name     String
   role     String?  @default("USER")
-  
-  // Relación: Un usuario puede tener muchas puntuaciones guardadas
+
   scores   Score[]
 }
 
-// 2. MAPAS (El diseño de los niveles que leerá el frontend)
+// --- MODELO DE MAPAS (Instancias de escenario JSON) ---
 model Map {
   id         Int      @id @default(autoincrement())
   name       String   // Ej: "Mazmorra de Inicio"
   level      Int      @default(1)
   
-  // Usamos el tipo Json de Prisma para guardar tu matriz ["####", "#_M_", ...]
   layout     Json     
-  
-  // Usamos Json para guardar qué hace cada letra { "M": { "hp": 30 } }
   dictionary Json     
   
   createdAt  DateTime @default(now())
 }
 
-// 3. PUNTUACIONES (Para el Top 10)
+// --- PUNTUACIONES GLOBALES E HISTORIAL ---
 model Score {
   id                Int      @id @default(autoincrement())
-  totalDamageDealt  Int      @default(0) // Daño total a enemigos
-  totalDamageTaken   Int      @default(0) // Daño total recibido
+  totalDamageDealt  Int      @default(0)
+  totalDamageTaken  Int      @default(0)
   floor             Int      @default(1)
   kills             Int      @default(0)
+  xp                Int      @default(0)
   
   userId            Int
   user              User     @relation(fields: [userId], references: [id])
   
   createdAt         DateTime @default(now())
 }
-// 4. ITEMS (La base de datos dinámica de objetos)
+
+// --- REGISTRO DE LOOT E INVENTARIO ---
 model Item {
   id           Int      @id @default(autoincrement())
   name         String
-  spriteKey    String   // Coincide con el nombre en Phaser (ej: "item_sword")
+  spriteKey    String
   description  String
   rarity       String   // "common", "uncommon", "rare"
-  
-  // Cambiamos a 'effects' en plural porque un JSON puede guardar una lista
   effects      Json     // Guardaremos algo como: [{"type": "heal", "value": 30}]
   
   isConsumable Boolean  @default(false)

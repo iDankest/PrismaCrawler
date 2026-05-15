@@ -9,6 +9,9 @@ import { useItemsCache } from '../hooks/useItemsCache'
 import { initializeItemsDB } from '../data/itemsDatabase'
 import { useNavigate } from 'react-router-dom'
 
+// Resolución de URL base del servidor según entorno (Desarrollo local / Producción)
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
 function PhaserGame() {
   const gameContainer = useRef(null)
   const gameRef = useRef(null)
@@ -20,29 +23,32 @@ function PhaserGame() {
   const [gameOver, setGameOver] = useState(false);
   const [finalStats, setFinalStats] = useState(null);
 
-  // --- NUEVO: Estados para manejar la carga del mapa desde el Backend ---
+  // Estados y gestión de datos de nivel remoto
   const [mapData, setMapData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Añadimos un estado para el ID del mapa actual
-  const [currentMapId, setCurrentMapId] = useState(1);
+  // Referencias para inyección segura de dependencias asíncronas en el motor gráfico
+  const initialMapDataRef = useRef(null);
+  const currentMapIdRef = useRef(1);
 
-  // Convertimos el fetch en una función reutilizable
+  /** Solicita el siguiente nivel a la API REST y actualiza el estado inyectándolo a Phaser */
   const loadMap = async (mapId) => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:3000/api/game/map/${mapId}`,
+        `${API_URL}/api/game/map/${mapId}`,
       );
       if (!response.ok) throw new Error("Error al cargar mapa");
       const data = await response.json();
 
       setMapData(data);
-      setCurrentMapId(mapId);
+      currentMapIdRef.current = mapId;
 
-      // Si la escena ya existe, le pasamos los nuevos datos directamente
+      // Delegación de matriz hacia la escena activa o encolamiento pre-render
       if (sceneRef.current) {
         sceneRef.current.setupBackendMap(data);
+      } else {
+        initialMapDataRef.current = data;
       }
     } catch (error) {
       console.error("Fallo al cargar mapa del backend", error);
@@ -50,11 +56,29 @@ function PhaserGame() {
       setIsLoading(false);
     }
   };
-  // --- NUEVO: Efecto para hacer el Fetch al Backend ---
+  
+  // Ciclo de vida inicial: Sincronización de caché remota y obtención de Nivel 1
   useEffect(() => {
-    const fetchMap = async () => {
+    const fetchInitialData = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/game/map/1");
+        // Sincronización del catálogo de objetos
+        try {
+          const itemsRes = await fetch(`${API_URL}/api/game/items`);
+          if (itemsRes.ok) {
+            const itemsJson = await itemsRes.json();
+            const itemsObj = {};
+            itemsJson.data.forEach(item => {
+              itemsObj[item.spriteKey] = item;
+            });
+            initializeItemsDB(itemsObj);
+            console.log("✅ Items cargados con éxito desde la BD:", itemsObj);
+          }
+        } catch (itemErr) {
+          console.warn("⚠️ No se pudieron cargar los items, usando los locales.");
+        }
+
+        // Obtención de mapa inicial
+        const response = await fetch(`${API_URL}/api/game/map/1`);
 
         if (!response.ok) {
           throw new Error(`Error HTTP: ${response.status}`);
@@ -62,63 +86,97 @@ function PhaserGame() {
 
         const data = await response.json();
         setMapData(data);
-        console.log("Mapa cargado con éxito desde el servidor:", data);
+        console.log("✅ Mapa cargado con éxito desde el servidor:", data);
+        
+        if (sceneRef.current) {
+          sceneRef.current.setupBackendMap(data);
+        } else {
+          initialMapDataRef.current = data;
+        }
       } catch (error) {
-        console.warn(
-          "No se pudo cargar el mapa. Generando mapa de fallback...",
-          error.message,
-        );
-        // Fallback en caso de que el backend esté apagado para que no pete el frontend
-        setMapData({
+        console.error("❌ Fetch falló (Revisa la consola por si hay errores de CORS):", error.message);
+        console.warn("Iniciando capa de respaldo (Fallback Procedural)...");
+        
+        // Matriz de respaldo en caso de desconexión del servidor principal
+        const fallbackMap = {
           layout: [
-            "##########",
-            "#P_______#",
+            "####DD####",
+            "#M____M__#",
             "#___M____#",
-            "#_###____#",
-            "#___M____#",
-            "##########",
+            "#_###__T_#",
+            "#____P___#",
+            "####DD####",
           ],
           dictionary: {
             M: { hp: 30, damage: 5 },
           },
-        });
+        };
+        setMapData(fallbackMap);
+        if (sceneRef.current) {
+          sceneRef.current.setupBackendMap(fallbackMap);
+        } else {
+          initialMapDataRef.current = fallbackMap;
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchMap();
+    fetchInitialData();
   }, []); // Se ejecuta solo una vez al montar el componente
 
-  // Efecto para inicializar Phaser (Modificado para esperar al mapData)
-  // Efecto para inicializar Phaser (Modificado para esperar al mapData)
+  // Inicialización del Canvas y montaje del framework Phaser
   useEffect(() => {
-    // Si está cargando o no hay contenedor/mapa, o si el juego ya existe, no hacemos nada
-    if (isLoading || !mapData || !gameContainer.current || gameRef.current) return;
+    if (!gameContainer.current || gameRef.current) return;
 
-    // Crear escena personalizada
     class CustomGameScene extends GameScene {
       create() {
         super.create();
         sceneRef.current = this;
 
-        // Enviamos el mapa descargado a la lógica de Phaser
-        if (typeof this.setupBackendMap === "function") {
+        // Inyección de entorno de red a la inicialización gráfica
+        if (initialMapDataRef.current && typeof this.setupBackendMap === "function") {
+          this.setupBackendMap(initialMapDataRef.current);
+        } else if (mapData && typeof this.setupBackendMap === "function") {
           this.setupBackendMap(mapData);
         }
 
         // Conectar callbacks
         this.onGameStateUpdate = (state) => setGameState(state);
-        this.onGameOver = (stats) => {
+        this.onGameOver = async (stats) => {
           setGameOver(true);
           setFinalStats(stats);
+
+          // Persistencia de los resultados de sesión mediante JWT
+          try {
+            const token = localStorage.getItem('token');
+            if (token) {
+              const response = await fetch(`${API_URL}/api/game/score`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                  floor: stats.floor || 1,
+                  kills: stats.kills || 0,
+                  xp: stats.xp || 0,
+                  totalDamageDealt: stats.totalDamageDealt || 0,
+                  totalDamageTaken: stats.totalDamageTaken || 0
+                })
+              });
+              
+              if (response.ok) console.log('🏆 Puntuación guardada en la base de datos con éxito');
+            }
+          } catch (error) {
+            console.error('❌ Error al guardar la puntuación:', error);
+          }
         };
         this.onInventoryUpdate = (items) => setInventory([...items]);
         
-        // --- AQUI ES DONDE DEBE IR EL CALLBACK DE SALIDA ---
+        // Solicitud de carga y transición de siguiente área
         this.onLevelExit = () => {
-          // Usamos el ID del mapa actual que nos devolvió Prisma para pedir el siguiente
-          loadMap(mapData.id + 1); 
+          loadMap(currentMapIdRef.current + 1); 
         };
       }
     }
@@ -150,7 +208,7 @@ function PhaserGame() {
         gameRef.current = null;
       }
     };
-  }, [isLoading, mapData]); // IMPORTANTE: Solo depende de isLoading y mapData
+  }, []);
 
   const handleRestart = () => {
     setGameOver(false);
@@ -171,28 +229,27 @@ function PhaserGame() {
   }
 
   return (
-    <div className="m-4  flex">
-      {/* CONTENEDOR DEL JUEGO */}
-      <div className="">
-        <div
-          ref={gameContainer}
-          className=""
-         
-        />
+    <div className="w-full min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 flex items-center justify-center p-8 gap-8">
+      
+      {/* PANEL IZQUIERDO: STATS */}
+      <div className="w-64 flex-shrink-0">
+        {gameState && !gameOver && <StatsPanel gameState={gameState} />}
       </div>
 
-      {/* PANELS FLOTANTES */}
-      
-      {gameState && !gameOver && (
-        <div className="flex flex-col gap-2 ml-4" >
-          <StatsPanel gameState={gameState} />
-          <InventoryPanel inventory={inventory} />
-        </div>
-      )}
+      {/* CONTENEDOR DEL JUEGO */}
+      <div className="relative flex-shrink-0">
+        <div
+          ref={gameContainer}
+          className="border-4 border-cyan-500 rounded-lg overflow-hidden shadow-2xl bg-black"
+          style={{
+            boxShadow:
+              "0 0 30px rgba(6, 182, 212, 0.4), inset 0 0 20px rgba(59, 130, 246, 0.1)",
+          }}
+        />
 
       {/* MODAL GAME OVER */}
       {gameOver && finalStats && (
-        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center z-50">
           <div
             className="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-cyan-500 rounded-xl p-8 max-w-md w-full mx-4"
             style={{
@@ -261,8 +318,14 @@ function PhaserGame() {
               </button>
             </div>
           </div>
-        </div> 
-       )} 
+        </div>
+      )}
+      </div>
+
+      {/* PANEL DERECHO: INVENTARIO */}
+      <div className="w-64 flex-shrink-0">
+        {gameState && !gameOver && <InventoryPanel inventory={inventory} />}
+      </div>
     </div>
   );
 }

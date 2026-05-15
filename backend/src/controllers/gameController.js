@@ -5,7 +5,7 @@ const AppError = require('../utils/AppError.js');
 
 const gameController = {
   
-  // --- OBTENER UN MAPA ---
+  /** Controlador HTTP para recuperar la estructura y semántica JSON de un nivel concreto */
   getMap: async (req, res, next) => {
     try {
       const mapId = parseInt(req.params.id, 10);
@@ -14,10 +14,10 @@ const gameController = {
         return next(new AppError('El ID del mapa debe ser un número válido', 400));
       }
 
-      // 1. Obtenemos el mapa de la base de datos (que viene con textos)
+      // Obtención del nivel procesado desde el servicio
       const map = await gameLogicService.getMap(mapId);
       
-      // 2. Parseamos los textos para convertirlos de nuevo a Array y Objeto
+      // Parseo inverso de entidades almacenadas como String
       if (typeof map.layout === 'string') {
         map.layout = JSON.parse(map.layout);
       }
@@ -25,14 +25,13 @@ const gameController = {
         map.dictionary = JSON.parse(map.dictionary);
       }
       
-      // 3. Ahora sí, lo enviamos bien formateado
       res.status(200).json(map);
     } catch (error) {
       next(error);
     }
   },
 
-  // --- OBTENER EL TOP DE PUNTUACIONES ---
+  /** Retorna los 10 mejores expedientes del Leaderboard global */
   getTopScores: async (req, res, next) => {
     try {
       const scores = await gameLogicService.getTopScores();
@@ -46,23 +45,22 @@ const gameController = {
     }
   },
 
-  // --- GUARDAR PUNTUACIÓN (XP) AL MORIR ---
+  /** Consagra las estadísticas de sesión de un jugador fallecido asociando el payload al token JWT provisto */
   saveScore: async (req, res, next) => {
     try {
-      const { xp } = req.body;
-      const userId = req.user.userId; // Obtenido del token JWT gracias al authMiddleware
+      const userId = req.user.userId;
+      const scoreData = req.body;
 
-      if (xp === undefined || typeof xp !== 'number') {
-        return next(new AppError('La puntuación (xp) es obligatoria y debe ser un número', 400));
+      if (scoreData.floor === undefined || scoreData.xp === undefined) {
+        return next(new AppError('El piso (floor) y la experiencia (xp) son obligatorios', 400));
       }
 
-      // (Nota: Esta función saveScore habría que añadirla a gameLogic.js para que hable con Prisma)
-      // const newScore = await gameLogicService.saveScore(userId, xp);
+      const newScore = await gameLogicService.saveScore(userId, scoreData);
 
       res.status(201).json({
         success: true,
         message: 'Puntuación guardada correctamente',
-        // data: newScore
+        data: newScore
       });
     } catch (error) {
       next(error);
@@ -82,7 +80,7 @@ const gameController = {
   },
 
 
-  // --- CREAR UN MAPA NUEVO (ADMIN) ---
+  /** Inyección protegida de mapas en base de datos (Exclusivo administradores) */
   createMap: async (req, res, next) => {
     try {
       const { name, level, layout, dictionary } = req.body;

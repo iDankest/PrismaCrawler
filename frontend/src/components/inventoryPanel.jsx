@@ -1,4 +1,4 @@
-// src/components/inventoryPanel.jsx
+// src/components/InventoryPanel.jsx
 
 import { ITEMS_DB } from "../data/itemsDatabase";
 import { ItemTooltip } from "./ItemTooltip";
@@ -11,6 +11,7 @@ export function InventoryPanel({ inventory = [] }) {
       </h3>
 
       {/* Contenedor Grid Estilo Isaac */}
+      <div className="grid grid-cols-6 gap-1 bg-slate-900/40 p-2 rounded-lg border border-white/5 backdrop-blur-sm">
       <div className="grid grid-cols-6 gap-1 bg-slate-900/40 p-2 rounded-lg border border-white/5 backdrop-blur-sm">
         {inventory.map((itemId, index) => {
           const item = ITEMS_DB[itemId];

@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react'
 import api from './api/axios' 
 import Login from './pages/Login'
 import Game from './pages/Game'
-// Importación corregida del Leaderboard
-import Leaderboard from './components/Leaderboard' 
+import { Leaderboard } from './pages/Leaderboard' 
 import { ProtectedRoute } from './components/ProtectedRoute'
 
 function App() {
