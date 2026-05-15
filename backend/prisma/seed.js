@@ -59,6 +59,7 @@ async function main() {
         totalDamageTaken: 1500,
         floor: 15,
         kills: 120,
+        xp: 25000,
       },
       {
         userId: admin.id,
@@ -66,6 +67,7 @@ async function main() {
         totalDamageTaken: 4200,
         floor: 8,
         kills: 55,
+        xp: 12000,
       },
       {
         userId: player2.id,
@@ -73,6 +75,7 @@ async function main() {
         totalDamageTaken: 15000, // Sir Pupas es básicamente un saco de boxeo
         floor: 1,
         kills: 0,
+        xp: 50,
       },
     ],
   });

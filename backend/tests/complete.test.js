@@ -73,7 +73,7 @@ describe('Flujo E2E (User Journey API)', () => {
     const res = await request(app)
       .post('/api/game/score')
       .set('Authorization', `Bearer ${playerToken}`) // Usa token de jugador
-      .send({ xp: 2500 }); // Simulamos que ganó mucha experiencia
+      .send({ floor: 10, kills: 45, totalDamageDealt: 2500, xp: 5000 }); // Simulamos stats reales de partida
       
     expect(res.status).toBe(201);
   });

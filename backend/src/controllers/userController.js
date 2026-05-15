@@ -57,7 +57,17 @@ const userController = {
   },
 
   getProfile: async (req, res, next) => {
-    res.status(200).json({ message: "Perfil del usuario (En construcción)" });
+    try {
+      const userId = req.user.userId; // Viene del authMiddleware
+      const user = await userService.getUserProfile(userId);
+      
+      res.status(200).json({
+        message: 'Perfil recuperado exitosamente',
+        user
+      });
+    } catch (error) {
+      next(error);
+    }
   }
 };
 

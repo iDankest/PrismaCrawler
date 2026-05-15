@@ -34,11 +34,16 @@ describe('Pruebas de Base de Datos (Integración de Modelos)', () => {
     const score = await prisma.score.create({
       data: {
         userId: userId,
+        floor: 5,
+        kills: 20,
         xp: 500
       }
     });
     
     expect(score).toBeDefined();
+    expect(typeof score.floor).toBe('number');
+    expect(score.floor).toBe(5);
+    expect(score.kills).toBe(20);
     expect(typeof score.xp).toBe('number');
     expect(score.xp).toBe(500);
   });

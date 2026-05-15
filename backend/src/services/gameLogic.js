@@ -24,9 +24,11 @@ const gameLogicService = { // Implementación sólo IA
 getTopScores: async () => {
     return await prisma.score.findMany({
       take: 10,
-      orderBy: {
-        xp: 'desc' 
-      },
+      orderBy: [
+        { floor: 'desc' },
+        { xp: 'desc' },
+        { kills: 'desc' }
+      ],
       include: {
         user: { 
           select: { name: true } 
@@ -72,6 +74,10 @@ getTopScores: async () => {
     return await prisma.score.create({
       data: {
         userId: userId,
+        floor: data.floor || 1,
+        kills: data.kills || 0,
+        totalDamageDealt: data.totalDamageDealt || 0,
+        totalDamageTaken: data.totalDamageTaken || 0,
         xp: data.xp || 0
       }
     });

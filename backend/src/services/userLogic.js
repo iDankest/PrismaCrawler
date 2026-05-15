@@ -77,6 +77,25 @@ const userService = {
         name: user.name,
       }
     };
+  },
+
+  // Lógica para obtener el perfil y sus mejores puntuaciones
+  getUserProfile: async (userId) => {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { 
+        id: true, email: true, name: true, role: true,
+        scores: {
+          orderBy: [{ floor: 'desc' }, { xp: 'desc' }],
+          take: 5 // Traeremos el top 5 personal del usuario
+        }
+      }
+    });
+
+    if (!user) {
+      throw new AppError('Usuario no encontrado', 404);
+    }
+    return user;
   }
 };
 
