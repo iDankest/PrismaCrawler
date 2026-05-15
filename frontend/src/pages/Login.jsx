@@ -6,10 +6,13 @@ import logoImg from '../assets/Logo.png'
 import personajeGif from '../assets/Personaje.gif'
 import {useNavigate} from 'react-router-dom'
 import { useApi } from '../hooks/useApi.js'
+import { AtSign, Lock, Eye, EyeOff } from 'pixelarticons/react'
+
 
 function Login() {
 const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const navigate = useNavigate()
   
   // 2. Inicializamos el hook
@@ -87,30 +90,47 @@ const handleSubmit = async (e) => {
           <label className="block text-xs font-bold mb-2 tracking-widest" htmlFor="email">
             EMAIL LINK
           </label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="hero@dungeon.net"
-            className="w-full px-4 py-3 bg-slate-900 border-2 border-[#2A2C3E] rounded text-[#6C72A0] text-sm placeholder-[#292A3C] focus:outline-none focus:border-[#6C72A0]"
-          />
+          <div className="relative">
+            <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6C72A0] w-5 h-5" />
+            
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="hero@dungeon.net"
+              className="w-full pl-10 pr-4 py-3 bg-slate-900 border-2 border-[#2A2C3E] rounded text-[#6C72A0] text-sm placeholder-[#292A3C] focus:outline-none focus:border-[#6C72A0]"
+            />
+          </div>
         </div>
-
         {/* Password Input */}
-        <div>
-          <label className="block text-xs font-bold mb-2 tracking-widest" htmlFor="password">
-            SECRET CODE
-          </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-            className="w-full px-4 py-3 bg-slate-900 border-2 border-[#2A2C3E] rounded text-[#6C72A0] text-sm placeholder-[#292A3C] focus:outline-none focus:border-[#6C72A0]"
-          />
-        </div>
+<div>
+            <label className="block text-[10px] font-bold mb-2 tracking-widest " htmlFor="password">
+              ACCESS_KEY
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6C72A0] w-5 h-5" />
+              
+              <input
+                id="password"
+                // --- 2. Tipo dinámico ---
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full pl-10 pr-12 py-3 bg-slate-900 border-2 border-[#2A2C3E] rounded text-[#BBC3FF] text-sm placeholder-[#292A3C] focus:outline-none focus:border-[#4D61FF]"
+              />
+
+              {/* --- 3. Botón del ojito --- */}
+              <button
+                type="button" // IMPORTANTE: type="button" para que no envíe el formulario
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6C72A0] hover:text-[#BBC3FF] transition-colors"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+          </div>
 
         {/* Login Button */}
         <button

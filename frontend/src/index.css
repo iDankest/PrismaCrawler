@@ -40,4 +40,18 @@ html, body {
   background-image:
     linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  
+  /* Añadimos la animación */
+  animation: moveGrid 20s linear infinite;
+}
+
+@keyframes moveGrid {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    /* Es importante que este número sea múltiplo del background-size (32px) 
+       para que no se note el "salto" al reiniciar el ciclo */
+    background-position: 320px 320px;
+  }
 }
