@@ -286,22 +286,35 @@ export default Game;
 // .frontend/src/pages/Game.jsx
 
 import GameHeader from '../components/GameHeader'
+import Sidebar from '../components/Sidebar'
 import PhaserGame from '../components/PhaserGame'
 
 function Game() {
   return (
-    <div className="flex flex-col h-screen bg-slate-900">
-      <GameHeader />
+    <section className="relative h-screen bg-[#0D1230] bg-grid text-[#BBC3FF] overflow-hidden">
+      {/* Fondo con degradado */}
+      <div className="absolute inset-0 bg-linear-to-t from-[#0A0B14] via-transparent to-transparent opacity-80 z-0"></div>
       
-      <div className="flex-1 flex items-center justify-center">
-        <PhaserGame />
-      </div>
+      {/* Contenedor Principal Flex */}
+      <div className="relative flex h-screen z-10">
+        
+        {/* 1. SIDEBAR: Altura completa, ancho fijo */}
+        <Sidebar />
 
-      {/* Panel de stats (opcional) */}
-      <div className="bg-blue-900 border-t-4 border-blue-600 p-4">
-        <p className="text-blue-200">HP: 100/100 | XP: 0 | Level: 1</p>
+        {/* 2. CONTENEDOR DERECHO: Ocupa el resto del ancho y se divide verticalmente */}
+        <div className="flex-1 flex flex-col">
+          
+          {/* HEADER SUPERIOR: Ancho completo del espacio restante */}
+          <GameHeader />
+
+          {/* AREA DE JUEGO: Ocupa todo el espacio sobrante */}
+          <main className="flex-1 relative ">
+            <PhaserGame />
+          </main>
+          
+        </div>
       </div>
-    </div>
+    </section>
   )
 }
 

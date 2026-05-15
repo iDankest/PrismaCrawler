@@ -171,25 +171,23 @@ function PhaserGame() {
   }
 
   return (
-    <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 flex items-center justify-center">
+    <div className="m-4  flex">
       {/* CONTENEDOR DEL JUEGO */}
-      <div className="relative">
+      <div className="">
         <div
           ref={gameContainer}
-          className="border-4 border-cyan-500 rounded-lg overflow-hidden shadow-2xl"
-          style={{
-            boxShadow:
-              "0 0 30px rgba(6, 182, 212, 0.4), inset 0 0 20px rgba(59, 130, 246, 0.1)",
-          }}
+          className=""
+         
         />
       </div>
 
       {/* PANELS FLOTANTES */}
+      
       {gameState && !gameOver && (
-        <>
+        <div className="flex flex-col gap-2 ml-4" >
           <StatsPanel gameState={gameState} />
           <InventoryPanel inventory={inventory} />
-        </>
+        </div>
       )}
 
       {/* MODAL GAME OVER */}
@@ -263,8 +261,8 @@ function PhaserGame() {
               </button>
             </div>
           </div>
-        </div>
-      )}
+        </div> 
+       )} 
     </div>
   );
 }
