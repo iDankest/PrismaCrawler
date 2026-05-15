@@ -40,9 +40,13 @@ export class GameScene extends Phaser.Scene {
       attackSpeedMultiplier: 1.0,
       itemsCollected: [],
       hp: 100,
-      maxHp: 100
+      maxHp: 100,
+      xp: 0,
+      totalDamageDealt: 0,
+      totalDamageTaken: 0
     }
 
+    this.lastStateStr = ""
     this.onGameStateUpdate = null
     this.onGameOver = null
     this.onInventoryUpdate = null
@@ -112,6 +116,17 @@ export class GameScene extends Phaser.Scene {
       enemy.sprite.destroy();
     });
     this.enemies = [];
+    
+    // Limpiamos items y cofres no recogidos del piso anterior
+    this.items.forEach(item => {
+      if (item.sprite && item.sprite.active) item.sprite.destroy();
+    });
+    this.items = [];
+
+    this.chests.forEach(chest => {
+      if (chest.sprite && chest.sprite.active) chest.sprite.destroy();
+    });
+    this.chests = [];
 
     this.currentFloor = mapData.level || 1;
     this.floorActive = true;
@@ -388,13 +403,11 @@ export class GameScene extends Phaser.Scene {
       return true
     })
 
-    this.chests = this.chests.filter(chest => {
+    this.chests.forEach(chest => {
       const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, chest.sprite.x, chest.sprite.y)
       if (dist < 40 && !chest.opened) {
         this.openChest(chest)
-        return false
       }
-      return true
     })
 
     this.updateGameState()
@@ -409,6 +422,12 @@ export class GameScene extends Phaser.Scene {
     this.enemies = []
     this.obstacles.forEach((obs) => { obs.sprite.destroy(); obs.crystal.destroy(); });
     this.obstacles = [];
+
+    // Limpiamos items y cofres del piso anterior
+    this.items.forEach(item => { if (item.sprite && item.sprite.active) item.sprite.destroy(); });
+    this.items = [];
+    this.chests.forEach(chest => { if (chest.sprite && chest.sprite.active) chest.sprite.destroy(); });
+    this.chests = [];
 
     // Generamos sala vacía procedural si no usamos Backend
     this.createProceduralRoom();
@@ -545,12 +564,15 @@ export class GameScene extends Phaser.Scene {
       )
 
       if (distance < attackRange) {
+        const actualDamage = Math.min(enemy.hp, attackDamage)
         enemy.hp -= attackDamage
+        this.stats.totalDamageDealt += actualDamage
 
         if (enemy.hp <= 0) {
           enemy.sprite.destroy()
           this.enemies = this.enemies.filter(e => e !== enemy)
           this.stats.kills++
+          this.stats.xp += (enemy.maxHp * 3) // Otorgamos XP basada en la vida del enemigo
           
           if (Math.random() < 0.4) {
             this.spawnChest(enemy.sprite.x, enemy.sprite.y)
@@ -601,6 +623,7 @@ export class GameScene extends Phaser.Scene {
 
     const attackDamage = enemy.damage
     this.stats.hp -= attackDamage
+    this.stats.totalDamageTaken += attackDamage
     this.player.hp = this.stats.hp
 
     if (this.stats.hp <= 0) {
@@ -612,7 +635,10 @@ export class GameScene extends Phaser.Scene {
           floor: this.currentFloor,
           kills: this.stats.kills,
           money: this.stats.money,
-          itemsCollected: this.stats.itemsCollected.length
+          itemsCollected: this.stats.itemsCollected.length,
+          xp: this.stats.xp,
+          totalDamageDealt: Math.round(this.stats.totalDamageDealt),
+          totalDamageTaken: Math.round(this.stats.totalDamageTaken)
         })
       }
       this.scene.pause()
@@ -629,17 +655,24 @@ export class GameScene extends Phaser.Scene {
   }
 
   updateGameState() {
-    if (this.onGameStateUpdate) {
-      this.onGameStateUpdate({
-        hp: this.stats.hp,
-        maxHp: this.stats.maxHp,
-        floor: this.currentFloor,
-        kills: this.stats.kills,
-        money: this.stats.money,
-        damageMultiplier: this.stats.damageMultiplier,
-        speedMultiplier: this.stats.speedMultiplier,
-        attackSpeedMultiplier: this.stats.attackSpeedMultiplier
-      })
+    const newStateStr = JSON.stringify({
+      hp: this.stats.hp,
+      maxHp: this.stats.maxHp,
+      floor: this.currentFloor,
+      kills: this.stats.kills,
+      money: this.stats.money,
+      damageMultiplier: this.stats.damageMultiplier,
+      speedMultiplier: this.stats.speedMultiplier,
+      attackSpeedMultiplier: this.stats.attackSpeedMultiplier,
+      xp: this.stats.xp
+    });
+
+    // Optimización: Solo notificamos a React si los stats REALMENTE han cambiado
+    if (this.lastStateStr !== newStateStr) {
+      this.lastStateStr = newStateStr;
+      if (this.onGameStateUpdate) {
+        this.onGameStateUpdate(JSON.parse(newStateStr));
+      }
     }
   }
 

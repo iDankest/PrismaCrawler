@@ -39,29 +39,8 @@ getTopScores: async () => {
 
 
   getItems: async () => {
-    // Retornamos un array local (Opción 2 - Sin Base de Datos)
-    return [
-      {
-        id: 'item_sword',
-        name: 'Iron Sword',
-        description: '+50% Damage',
-        rarity: 'rare',
-        color: 0xFF6B6B,
-        effects: [{ type: 'damageMultiplier', value: 1.5 }],
-        spriteKey: 'item_sword',
-        consumable: false
-      },
-      {
-        id: 'item_potion',
-        name: 'Health Potion',
-        description: 'Restore 30 HP',
-        rarity: 'common',
-        color: 0xFF1493,
-        effects: [{ type: 'heal', value: 30 }],
-        spriteKey: 'item_potion',
-        consumable: true
-      }
-    ];
+    // Traemos TODOS los items de forma dinámica desde PostgreSQL
+    return await prisma.item.findMany();
   },
 
 

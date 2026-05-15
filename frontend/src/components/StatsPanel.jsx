@@ -1,57 +1,44 @@
-// src/components/StatsPanel.jsx
-
-import { useState, useEffect } from 'react'
-
 export function StatsPanel({ gameState }) {
-  if (!gameState) return null
+  if (!gameState) return null;
 
-  const [speedChanged, setSpeedChanged] = useState(false)
-
-  useEffect(() => {
-    setSpeedChanged(true)
-    const timer = setTimeout(() => setSpeedChanged(false), 500)
-    return () => clearTimeout(timer)
-  }, [gameState.speedMultiplier])
-
- return (
-    <div className="relative  w-64 z-50 group">
-      {/* Picos de acentuación del HUD */}
-      <div className="absolute top-1 left-1 w-2 h-2 border-t-2 border-l-2 border-[#BBC3FF] z-20"></div>
-      <div className="absolute top-1 right-1 w-2 h-2 border-t-2 border-r-2 border-[#BBC3FF] z-20"></div>
-      <div className="absolute bottom-1 left-1 w-2 h-2 border-b-2 border-l-2 border-[#BBC3FF] z-20"></div>
-      <div className="absolute bottom-1 right-1 w-2 h-2 border-b-2 border-r-2 border-[#BBC3FF] z-20"></div>
-
-      <div className="bg-[#1D2240]/90 border-2 border-[#74768B] p-4 backdrop-blur-sm shadow-2xl">
-        <h3 className="text-[#BBC3FF] font-black text-[10px] uppercase tracking-[0.3em] mb-4 border-b border-[#74768B]/30 pb-2">
-          &gt; System_Stats
-        </h3>
-        
-        {/* Barra de Vida Estilo Dungeon */}
-        <div className="space-y-1 mb-4">
-          <div className="flex justify-between text-[9px] font-mono text-blue-300">
-            <span>VITAL_SIGNS</span>
-            <span>{gameState.hp}/{gameState.maxHp}</span>
-          </div>
-          <div className="w-full h-3 bg-slate-900 border border-[#74768B]/50 p-[2px]">
-            <div 
-              className="h-full bg-gradient-to-r from-red-600 to-red-400 transition-all duration-500"
-              style={{ width: `${(gameState.hp / gameState.maxHp) * 100}%` }}
-            ></div>
-          </div>
+  return (
+    <div className="bg-slate-900/80 border-2 border-cyan-500 p-4 rounded-lg shadow-[0_0_15px_rgba(6,182,212,0.4)] backdrop-blur-sm text-white font-mono w-full pointer-events-none">
+      <h2 className="text-cyan-400 font-black text-xl mb-2 text-center uppercase tracking-widest border-b border-cyan-500/50 pb-2">
+        Hero Stats
+      </h2>
+      
+      <div className="space-y-2 text-sm">
+        <div className="flex justify-between items-center bg-slate-800/50 p-1 px-2 rounded">
+          <span>❤️ HP:</span>
+          <span className={gameState.hp <= 30 ? "text-red-400 font-bold animate-pulse" : "text-green-400 font-bold"}>
+            {Math.round(gameState.hp)} / {gameState.maxHp}
+          </span>
         </div>
+        <div className="flex justify-between items-center bg-slate-800/50 p-1 px-2 rounded">
+          <span>✨ XP:</span>
+          <span className="text-yellow-400 font-bold">{gameState.xp}</span>
+        </div>
+        <div className="flex justify-between items-center bg-slate-800/50 p-1 px-2 rounded">
+          <span>🏰 Floor:</span>
+          <span className="text-purple-400 font-bold">{gameState.floor}</span>
+        </div>
+        <div className="flex justify-between items-center bg-slate-800/50 p-1 px-2 rounded">
+          <span>💀 Kills:</span>
+          <span className="text-red-500 font-bold">{gameState.kills}</span>
+        </div>
+      </div>
 
-        {/* Otros stats en rejilla */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="bg-black/40 p-2 border border-[#2A2C3E]">
-             <p className="text-[8px] text-[#74768B]">ATK_PWR</p>
-             <p className="text-[#BBC3FF] font-mono font-bold">{gameState.damageMultiplier}x</p>
-          </div>
-          <div className="bg-black/40 p-2 border border-[#2A2C3E]">
-             <p className="text-[8px] text-[#74768B]">VELOCITY</p>
-             <p className="text-[#BBC3FF] font-mono font-bold">{gameState.speedMultiplier}x</p>
-          </div>
+      <h3 className="text-cyan-500 text-xs font-bold mt-4 mb-2 uppercase text-center">Bonuses</h3>
+      <div className="grid grid-cols-2 gap-2 text-xs">
+        <div className="bg-slate-800/50 p-2 rounded text-center border border-slate-700">
+          <div className="text-slate-400 mb-1">⚔️ Damage</div>
+          <div className="font-bold text-orange-400">x{gameState.damageMultiplier.toFixed(2)}</div>
+        </div>
+        <div className="bg-slate-800/50 p-2 rounded text-center border border-slate-700">
+          <div className="text-slate-400 mb-1">💨 Speed</div>
+          <div className="font-bold text-blue-400">x{gameState.speedMultiplier.toFixed(2)}</div>
         </div>
       </div>
     </div>
-  )
+  );
 }
