@@ -7,14 +7,14 @@ async function main() {
     "🌱 Sincronizando con el Schema real y poblando la Mazmorra definitiva...",
   );
 
-  // Limpieza total: Borramos todo para que el autoincrement de los mapas no se vuelva loco
+  // Reinicio y limpieza sistemática de registros
   await prisma.score.deleteMany({});
   await prisma.item.deleteMany({});
   await prisma.map.deleteMany({});
 
   const hashedPassword = await bcrypt.hash("admin123", 10);
 
-  // 1. Usuarios para el Ranking
+  // Inyección de perfiles de usuario predeterminados
   console.log("👥 Creando leyendas (y a Sir Pupas)...");
   const admin = await prisma.user.upsert({
     where: { email: "admin@admin.com" },
@@ -49,7 +49,7 @@ async function main() {
     },
   });
 
-  // 2. Poblamos los Leaderboards (Scores)
+  // Inyección de expedientes estadísticos (Salón de la fama)
   console.log("📊 Rellenando el Salón de la Infamia...");
   await prisma.score.createMany({
     data: [
@@ -72,7 +72,7 @@ async function main() {
       {
         userId: player2.id,
         totalDamageDealt: 200,
-        totalDamageTaken: 15000, // Sir Pupas es básicamente un saco de boxeo
+        totalDamageTaken: 15000,
         floor: 1,
         kills: 0,
         xp: 50,
@@ -130,7 +130,7 @@ async function main() {
   await prisma.item.createMany({ data: itemsData });
   console.log("✅ Items creados.");
 
-  // 4. Los Mapas (Configuración Kilian v2)
+  // Inyección de estructuras matriciales para mapas
   console.log("🗺️ Construyendo los 6 niveles de la Mazmorra...");
 
   const mapsData = [
@@ -256,7 +256,7 @@ async function main() {
   }
 
   console.log(
-    "🚀 ¡POR FIN! Seed completado. Leaderboards con Guts aplastando récords y Sir Pupas llorando.",
+    "🚀 Proceso Seed completado exitosamente: Datos, Usuarios, Índices y Relaciones sincronizadas.",
   );
 }
 

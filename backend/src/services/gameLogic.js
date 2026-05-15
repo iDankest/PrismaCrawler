@@ -1,14 +1,12 @@
 // .backend/src/services/gameLogic.js
-//Esto se usuara para no ensuciar Controllers y añadir la logica del juego ejemplo calculateDamage() o checkCollision().
-
+/**
+ * Capa de Servicio: Gestiona las transacciones con el ORM de Prisma
+ * y encapsula la lógica de negocio central del juego.
+ */
 const prisma = require('../config/db.js');
 const AppError = require('../utils/AppError.js');
 
 const gameLogicService = { // Implementación sólo IA
-// Cargar mapas, objetos enemgios --> GET
-// ==========================================
-  // RUTAS PÚBLICAS / JUGADORES (GET)
-  // ==========================================
 
   getMap: async (mapId) => {
     const map = await prisma.map.findUnique({
@@ -19,8 +17,7 @@ const gameLogicService = { // Implementación sólo IA
     return map;
   },
 
-  // Cargar puntuación, topscore, usuarios --> GET
-  // 2. Cargar Leaderboard (Top 10 puntuaciones)
+  /** Obtiene el Top 10 de mejores partidas globales jerarquizadas por progreso y mérito */
 getTopScores: async () => {
     return await prisma.score.findMany({
       take: 10,
@@ -61,10 +58,9 @@ getTopScores: async () => {
       }
     });
   },
-  // 3. Crear un nuevo mapa en la base de datos
-  // Implementar mapas, nuevos items. --> POST
+
+  /** Persistencia de matriz de niveles mediante deserialización JSON */
   createMap: async (mapData) => {
-    // mapData recibiría el array de strings y la configuración
     const { name, level, layout, dictionary } = mapData;
 
     if (!layout || !Array.isArray(layout)) {
@@ -75,7 +71,7 @@ getTopScores: async () => {
       data: {
         name,
         level,
-        layout: JSON.stringify(layout), // Prisma guarda el array como JSON
+        layout: JSON.stringify(layout),
         dictionary: JSON.stringify(dictionary)
       }
     });
@@ -83,10 +79,7 @@ getTopScores: async () => {
     return newMap;
   },
 
-// Actualizar mapas, stats de items y enemgios --> PUT
-// 4. Actualizar las estadísticas de un enemigo global
   updateEnemyStats: async (enemyId, newData) => {
-    // Imagina que tienes una tabla de plantillas de enemigos
     const updatedEnemy = await prisma.enemyTemplate.update({
       where: { id: enemyId },
       data: newData

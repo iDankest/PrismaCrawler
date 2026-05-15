@@ -66,10 +66,30 @@ Sigue un patrón de diseño **Controller-Service**, donde las rutas HTTP derivan
 - `POST /api/game/score` | `GET /api/game/leaderboard` *(Clasificación)*
 
 ### Frontend (React, Vite, Tailwind CSS, Phaser)
-El frontend desacopla estrictamente la lógica de la Interfaz de Usuario (React) de las rutinas por ciclo y mecánicas del juego (Phaser).
-- **Orquestador UI (`Game.jsx` & `PhaserGame.jsx`)**: Gestionan la interfaz HUD flotante (vida, XP, inventario) y modales de Muerte/Reinicio, ejerciendo de puente mediante callbacks asíncronos (`onGameOver`, `onLevelExit`). También orquestan las llamadas `fetch` de los mapas para la paginación de salas.
-- **Caché Local (`itemsDatabase.js`)**: Base de datos de *fallback* y memoria temporal que sincroniza los ítems de PostgreSQL con React, reduciendo las peticiones al servidor (*polling*) y suministrando objetos de forma instantánea a la escena.
-- **GameScene (`gameScene.js`)**: Entorno puramente focalizado en la jugabilidad. Procesa la matriz enviada por el backend, dibuja baldosas, gestiona rutinas simples de IA de enemigos y el procesamiento matemático (colisiones y ataques).
+El frontend desacopla la lógica de la Interfaz de Usuario (React) de las rutinas de actualización gráfica del juego (Phaser).
+- **Orquestador UI y Puente HTTP (`Game.jsx` & `PhaserGame.jsx`)**: Gestionan el HUD flotante y los modales. Actúan como puente de red haciendo `fetch` a la API para descargar el mapa actual y el catálogo de objetos de PostgreSQL. Al morir el jugador, capturan las estadísticas y las envían a `/api/game/score`, inyectando el token JWT en las cabeceras para validar la identidad.
+- **Caché Local y Estado (`itemsDatabase.js`)**: Base de datos en memoria que recibe la configuración del backend y la inyecta a Phaser, permitiendo consultar los multiplicadores estadísticos en tiempo real sin latencia de red.
+- **Gestión de Assets (`gameScene.js`)**: Entorno de jugabilidad. Emplea el `Loader` de Phaser para cargar *spritesheets*, dividir imágenes en mosaicos (ej: indexación de texturas de 32x32 píxeles) y reproducir animaciones de ataque y movimiento cuadro por cuadro.
+
+---
+
+## Mecánicas del Juego y Motor Gráfico (Phaser)
+
+El core jugable exprime la API del framework **Phaser 4**, optimizando el rendimiento mediante lógicas customizadas y el uso avanzado de sus submódulos internos:
+
+### 🎨 Carga e Inserción de Sprites
+- **Spritesheets y Texturas**: En la fase de `preload()`, se emplea el `Loader` para cargar recursos e indexar cuadrículas exactas (ej. 32x32 o 64x64 píxeles) para personajes, enemigos y elementos del entorno.
+- **Animaciones (Anims)**: Se generan animaciones dinámicas (`playerWalk`, `chest-opening`) utilizando `anims.generateFrameNumbers`, logrando un control milimétrico sobre la tasa de refresco (*frameRate*) y repeticiones.
+- **Texturizado Aleatorio Procedural**: El escenario se pinta rellenando el fondo de manera iterativa. Se inyecta una textura dividida en mosaicos (`Suelo.png`) con fotogramas desplazados de forma aleatoria (`Phaser.Math.Between`) enviándolos al fondo absoluto (`setDepth(-1)`).
+
+### ⚙️ Extensiones y Módulos de Phaser
+- **Motor de Colisiones Matemático (AABB)**: En lugar de depender de motores de físicas pesados (como Matter.js o Arcade), las colisiones se resuelven iterando obstáculos y calculando *Axis-Aligned Bounding Boxes* (`Phaser.Math.Clamp`) y distancias. Garantizando máxima ligereza y 60 FPS estables.
+- **Interpolaciones (Tweens) e Iluminación**: Uso de `this.tweens.add` para crear animaciones jugosas (ej. el salto, rotación y rebote *yoyo* del botín al abrir cofres). Empleo de `setTint` para feedback visual durante la acción de *Dash*.
+- **Gestor de Timers Temporales**: Uso del reloj del motor (`this.time.delayedCall`) orquestado bajo un recolector de basura (`cancelAllTimers`) para prevenir fugas de memoria al generar ataques, tiempos de recarga (*cooldowns*) y cierres de escena.
+
+### 🔗 Comunicación con el Backend y Lógica
+- **Paginación de Niveles (*Room Clearing*)**: React inyecta la matriz del mapa JSON extraída de Node.js a Phaser. Al eliminar a todos los enemigos, el motor gráfico destruye las "puertas". Cuando el jugador sale de la pantalla, Phaser lanza el *callback* `onLevelExit`, alertando a React para solicitar el siguiente nivel a la API mediante `fetch` sin destruir el canvas.
+- **Persistencia y PostgreSQL**: Al sufrir un *Game Over*, Phaser compila estadísticas completas de la sesión (HP, XP, multiplicadores, piso alcanzado). React intercepta esta información y efectúa un `POST` seguro (JWT) a la base de datos, reflejándolo al instante en la pantalla de *Rankings Globales*.
 
 ---
 
@@ -146,28 +166,35 @@ npm run start:front
 
 ## Estructura del Proyecto
 
-El proyecto se organiza en dos módulos principales con una arquitectura de separación de responsabilidades:
+El proyecto se organiza en dos módulos robustos siguiendo el principio de separación de responsabilidades:
 
-```
+```text
 PrismaCrawler/
 ├── backend/
 │   ├── prisma/
-│   │   ├── schema.prisma       # Esquema de datos y modelos
-│   │   └── migrations/         # Historial de migraciones
+│   │   ├── schema.prisma       # Modelos de BD relacional (User, Map, Score, Item)
+│   │   ├── seed.js             # Generador maestro de datos (niveles, items, admins)
+│   │   └── migrations/         # Versiones y control SQL
 │   ├── src/
-│   │   ├── config/             # Configuración de Prisma Client y variables globales
-│   │   ├── controllers/        # Lógica de negocio y manejo de respuestas HTTP
-│   │   ├── middlewares/        # Validación JWT, control de roles y manejo de errores
-│   │   ├── routes/             # Definición de endpoints de la API REST
-│   │   ├── services/           # Lógica específica del juego (combates, XP, inventario)
-│   │   └── utils/              # Utilidades y clases de apoyo (ej. AppError)
-│   └── tests/                  # Pruebas de integración con Jest y Supertest
-├── frontend/                   # Aplicación cliente (React + Phaser)
+│   │   ├── config/db.js        # Conexión Singleton del ORM
+│   │   ├── controllers/        # Punto de entrada HTTP y respuestas JSON
+│   │   ├── middlewares/        # Bloqueo de rutas (authMiddleware, error handler)
+│   │   ├── routes/             # Enrutamiento de Express
+│   │   ├── services/           # Capa abstracta: Lógica de negocio y consultas DB
+│   │   └── index.js            # Montaje del servidor y CORS
+│   └── tests/                  # Cobertura TDD: Tests Unitarios, E2E y de Integración
+├── frontend/                   # Aplicación cliente (React + Vite + Tailwind + Phaser)
 │   ├── public/                 # Archivos estáticos accesibles públicamente
 │   └── src/
-│       ├── assets/             # Recursos gráficos, sprites y multimedia
-│       ├── components/         # Componentes reutilizables de la UI (GameHeader, PhaserGame)
-│       ├── pages/              # Vistas principales de la aplicación (Game, Login, etc.)
+│       ├── assets/             # Archivos fuente (spritesheets, audios, tiles)
+│       ├── components/         
+│       │   ├── PhaserGame.jsx  # Orquestador UI: Puente entre la API y el entorno gráfico
+│       │   ├── StatsPanel.jsx  # Panel renderizado que evalúa cambios de estado en tiempo real
+│       │   └── inventoryPanel.jsx # UI de elementos reactivos al ratón (Grid de objetos)
+│       ├── data/               # Caché local (DB en memoria inyectada al juego)
+│       ├── pages/              # Vistas manejadas por React Router DOM (Login, Leaderboard)
+│       ├── Scenes/
+│       │   └── gameScene.js    # Capa del motor gráfico (Lógicas procedurales y animación)
 │       └── App.jsx / main.jsx  # Puntos de entrada y configuración de rutas
 ├── package.json                # Scripts y dependencias raíz
 └── README.md

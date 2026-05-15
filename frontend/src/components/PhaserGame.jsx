@@ -9,7 +9,7 @@ import { useItemsCache } from '../hooks/useItemsCache'
 import { initializeItemsDB } from '../data/itemsDatabase'
 import { useNavigate } from 'react-router-dom'
 
-// Definimos la URL de la API dinámicamente
+// Resolución de URL base del servidor según entorno (Desarrollo local / Producción)
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 function PhaserGame() {
@@ -23,17 +23,15 @@ function PhaserGame() {
   const [gameOver, setGameOver] = useState(false);
   const [finalStats, setFinalStats] = useState(null);
 
-  // --- NUEVO: Estados para manejar la carga del mapa desde el Backend ---
+  // Estados y gestión de datos de nivel remoto
   const [mapData, setMapData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Ref para guardar el mapa inicial si Phaser arranca un milisegundo tarde
+  // Referencias para inyección segura de dependencias asíncronas en el motor gráfico
   const initialMapDataRef = useRef(null);
-
-  // Usamos una referencia para el ID del mapa actual para no tener problemas de cierres (closures) en Phaser
   const currentMapIdRef = useRef(1);
 
-  // Convertimos el fetch en una función reutilizable
+  /** Solicita el siguiente nivel a la API REST y actualiza el estado inyectándolo a Phaser */
   const loadMap = async (mapId) => {
     setIsLoading(true);
     try {
@@ -46,7 +44,7 @@ function PhaserGame() {
       setMapData(data);
       currentMapIdRef.current = mapId;
 
-      // Si la escena ya existe, le pasamos los nuevos datos directamente
+      // Delegación de matriz hacia la escena activa o encolamiento pre-render
       if (sceneRef.current) {
         sceneRef.current.setupBackendMap(data);
       } else {
@@ -58,17 +56,17 @@ function PhaserGame() {
       setIsLoading(false);
     }
   };
-  // --- NUEVO: Efecto para hacer el Fetch al Backend ---
+  
+  // Ciclo de vida inicial: Sincronización de caché remota y obtención de Nivel 1
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        // --- 1. FETCH DE ITEMS ---
+        // Sincronización del catálogo de objetos
         try {
           const itemsRes = await fetch(`${API_URL}/api/game/items`);
           if (itemsRes.ok) {
             const itemsJson = await itemsRes.json();
             const itemsObj = {};
-            // Transformamos el array de Prisma a un objeto usando spriteKey como clave
             itemsJson.data.forEach(item => {
               itemsObj[item.spriteKey] = item;
             });
@@ -79,7 +77,7 @@ function PhaserGame() {
           console.warn("⚠️ No se pudieron cargar los items, usando los locales.");
         }
 
-        // --- 2. FETCH DEL MAPA ---
+        // Obtención de mapa inicial
         const response = await fetch(`${API_URL}/api/game/map/1`);
 
         if (!response.ok) {
@@ -97,8 +95,9 @@ function PhaserGame() {
         }
       } catch (error) {
         console.error("❌ Fetch falló (Revisa la consola por si hay errores de CORS):", error.message);
-        console.warn("Generando mapa de fallback...");
-        // Fallback en caso de que el backend esté apagado para que no pete el frontend
+        console.warn("Iniciando capa de respaldo (Fallback Procedural)...");
+        
+        // Matriz de respaldo en caso de desconexión del servidor principal
         const fallbackMap = {
           layout: [
             "####DD####",
@@ -126,18 +125,16 @@ function PhaserGame() {
     fetchInitialData();
   }, []); // Se ejecuta solo una vez al montar el componente
 
-  // Efecto para inicializar Phaser (Modificado para esperar al mapData)
+  // Inicialización del Canvas y montaje del framework Phaser
   useEffect(() => {
-    // Si no hay contenedor o el juego ya existe, no hacemos nada
     if (!gameContainer.current || gameRef.current) return;
 
-    // Crear escena personalizada
     class CustomGameScene extends GameScene {
       create() {
         super.create();
         sceneRef.current = this;
 
-        // Enviamos el mapa inicial guardado en la referencia
+        // Inyección de entorno de red a la inicialización gráfica
         if (initialMapDataRef.current && typeof this.setupBackendMap === "function") {
           this.setupBackendMap(initialMapDataRef.current);
         } else if (mapData && typeof this.setupBackendMap === "function") {
@@ -150,9 +147,9 @@ function PhaserGame() {
           setGameOver(true);
           setFinalStats(stats);
 
-          // --- NUEVO: Enviar los resultados al backend ---
+          // Persistencia de los resultados de sesión mediante JWT
           try {
-            const token = localStorage.getItem('token'); // Asumimos que guardas el token en localStorage al hacer Login
+            const token = localStorage.getItem('token');
             if (token) {
               const response = await fetch(`${API_URL}/api/game/score`, {
                 method: 'POST',
@@ -163,7 +160,7 @@ function PhaserGame() {
                 body: JSON.stringify({
                   floor: stats.floor || 1,
                   kills: stats.kills || 0,
-                  xp: stats.xp || 0, // Asegúrate de que tu GameScene envíe la 'xp' en el objeto stats
+                  xp: stats.xp || 0,
                   totalDamageDealt: stats.totalDamageDealt || 0,
                   totalDamageTaken: stats.totalDamageTaken || 0
                 })
@@ -177,9 +174,8 @@ function PhaserGame() {
         };
         this.onInventoryUpdate = (items) => setInventory([...items]);
         
-        // --- AQUI ES DONDE DEBE IR EL CALLBACK DE SALIDA ---
+        // Solicitud de carga y transición de siguiente área
         this.onLevelExit = () => {
-          // Usamos la referencia actualizada para pedir el siguiente mapa de forma segura
           loadMap(currentMapIdRef.current + 1); 
         };
       }
@@ -212,7 +208,7 @@ function PhaserGame() {
         gameRef.current = null;
       }
     };
-  }, []); // ¡AHORA ESTÁ VACÍO! Así evitamos que React mate el juego al cambiar de mapa
+  }, []);
 
   const handleRestart = () => {
     setGameOver(false);

@@ -12,6 +12,7 @@ import Taza from '../assets/sprites/items/taza.png'
 import Saco from '../assets/sprites/items/saco.png'
 import Potion from '../assets/sprites/items/potion.png'
 import Cofre from '../assets/sprites/items/Cofre.png'
+import Suelo from '../assets/Entorno/Suelo.png'
 import { getRandomItem } from '../data/itemsDatabase'
 
 export class GameScene extends Phaser.Scene {
@@ -20,12 +21,15 @@ export class GameScene extends Phaser.Scene {
     this.player = null
     this.enemies = []
     this.obstacles = []
+    this.floorTiles = []
     this.items = []
     this.chests = []
     this.keys = null
     this.playerDirection = 1
     this.isAttacking = false
     this.gameOver = false
+    this.isDashing = false
+    this.lastDashTime = 0
     this.pendingTimers = []
     
     this.currentFloor = 0
@@ -63,6 +67,9 @@ export class GameScene extends Phaser.Scene {
     this.load.spritesheet('enemy', Slime, { frameWidth: 32, frameHeight: 32 })
     this.load.spritesheet('enemyAttack', SmileAttack, { frameWidth: 32, frameHeight: 32 })
     this.load.spritesheet('chest', Cofre, { frameWidth: 32, frameHeight: 32 })
+    
+    // Carga de textura de suelo respetando su tamaño original (32x32)
+    this.load.spritesheet('floor', Suelo, { frameWidth: 16, frameHeight: 16 })
 
     // SPRITES ITEMS
     this.load.image('item_sword', Espada)
@@ -94,17 +101,18 @@ export class GameScene extends Phaser.Scene {
       A: Phaser.Input.Keyboard.KeyCodes.A,
       S: Phaser.Input.Keyboard.KeyCodes.S,
       D: Phaser.Input.Keyboard.KeyCodes.D,
-      SPACE: Phaser.Input.Keyboard.KeyCodes.SPACE
+      SPACE: Phaser.Input.Keyboard.KeyCodes.SPACE,
+      SHIFT: Phaser.Input.Keyboard.KeyCodes.SHIFT
     })
 
     this.startFloor()
     console.log('✅ Juego iniciado')
   }
 
-  // --- LÓGICA DEL BACKEND RECUPERADA ---
+  /** Inicializa el nivel procesando la matriz y el diccionario JSON procedentes del servidor */
   setupBackendMap(mapData) {
     if (!mapData || !mapData.layout) return;
-    console.log("Configurando mapa desde Backend...", mapData);
+    console.log("Generando nivel a partir del esquema de red:", mapData);
 
     this.obstacles.forEach((obs) => {
       obs.sprite.destroy();
@@ -117,7 +125,7 @@ export class GameScene extends Phaser.Scene {
     });
     this.enemies = [];
     
-    // Limpiamos items y cofres no recogidos del piso anterior
+    // Limpieza de entidades residuales (entidades no recolectadas en el nivel previo)
     this.items.forEach(item => {
       if (item.sprite && item.sprite.active) item.sprite.destroy();
     });
@@ -127,6 +135,8 @@ export class GameScene extends Phaser.Scene {
       if (chest.sprite && chest.sprite.active) chest.sprite.destroy();
     });
     this.chests = [];
+    
+    this.drawFloor();
 
     this.currentFloor = mapData.level || 1;
     this.floorActive = true;
@@ -158,6 +168,24 @@ export class GameScene extends Phaser.Scene {
         }
       });
     });
+  }
+
+  /** Genera y renderiza la textura del suelo aplicando variaciones aleatorias para romper la monotonía visual */
+  drawFloor() {
+    // Destrucción de mosaicos previos para prevenir fugas de memoria
+    this.floorTiles.forEach(tile => { if (tile && tile.active) tile.destroy() })
+    this.floorTiles = []
+
+    // Renderizado del terreno iterando por bloques adaptados a la escala del sprite principal (64x64)
+    for (let x = 0; x < 640; x += 64) {
+      for (let y = 0; y < 360; y += 64) {
+        const frame = Phaser.Math.Between(0, 7) // Variación de textura
+        const tile = this.add.sprite(x + 32, y + 32, 'floor', frame)
+        tile.setScale(4) // 32x32 escalado x2 = 64x64 píxeles reales
+        tile.setDepth(-1) // Lo mandamos al fondo del todo
+        this.floorTiles.push(tile)
+      }
+    }
   }
 
   createObstacleAt(x, y, w, h, isDoor = false) {
@@ -204,7 +232,7 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  // --- OPTIMIZACIÓN DE ANIMACIONES DEL COMPAÑERO ---
+  /** Registro de animaciones y spritesheets para entidades interactivas */
   createAnimations() {
     if (!this.anims.exists('idle')) {
       this.anims.create({
@@ -285,7 +313,7 @@ export class GameScene extends Phaser.Scene {
   createProceduralRoom() {
     const w = 640;
     const h = 360;
-    const wallSize = 32;
+    const wallSize = 64; // Bloques de pared ajustados a 64x64 para igualar al jugador
 
     this.createObstacleAt(w / 2 - 100, wallSize / 2, w / 2 - 100, wallSize); 
     this.createObstacleAt(w / 2, wallSize / 2, 80, wallSize, true);         
@@ -299,10 +327,10 @@ export class GameScene extends Phaser.Scene {
     this.createObstacleAt(w - wallSize / 2, h / 2, wallSize, 80, true);          
   }
 
-  // --- BUG DE COLISIÓN ARREGLADO (De nuevo) ---
+  /** Implementación de colisión AABB para calcular solapamientos matemáticos entre hitbox y obstáculos */
   checkObstacleCollision(x, y, radius = 20) {
     for (let obstacle of this.obstacles) {
-      // Calculamos el borde del obstáculo SIN sumar el radio a la caja
+      // Delimitación de coordenadas sin extender los bordes del polígono base
       const closestX = Phaser.Math.Clamp(x, obstacle.x - obstacle.width / 2, obstacle.x + obstacle.width / 2);
       const closestY = Phaser.Math.Clamp(y, obstacle.y - obstacle.height / 2, obstacle.y + obstacle.height / 2);
       
@@ -318,12 +346,25 @@ export class GameScene extends Phaser.Scene {
     let isMoving = false
     let nextX = this.player.x
     let nextY = this.player.y
-    const moveSpeed = 1.5 * this.stats.speedMultiplier // Velocidad ajustada para no saltarse físicas
 
-    if (this.keys.W.isDown) { nextY -= moveSpeed; isMoving = true }
-    if (this.keys.S.isDown) { nextY += moveSpeed; isMoving = true }
-    if (this.keys.A.isDown) { nextX -= moveSpeed; isMoving = true; this.playerDirection = -1 }
-    if (this.keys.D.isDown) { nextX += moveSpeed; isMoving = true; this.playerDirection = 1 }
+    // Lógica de aceleración temporal (Dash) sujeta a validación de cooldown y feedback visual
+    if (this.keys.SHIFT.isDown && !this.isDashing && this.time.now - this.lastDashTime > 1000) {
+      this.isDashing = true;
+      this.lastDashTime = this.time.now;
+      this.player.setTint(0x00ffff);
+      this.addTrackedTimer(150, () => {
+        this.isDashing = false;
+        if (this.player.active) this.player.clearTint();
+      });
+    }
+
+    let currentSpeed = 2.0 * this.stats.speedMultiplier;
+    if (this.isDashing) currentSpeed *= 3.5;
+
+    if (this.keys.W.isDown) { nextY -= currentSpeed; isMoving = true }
+    if (this.keys.S.isDown) { nextY += currentSpeed; isMoving = true }
+    if (this.keys.A.isDown) { nextX -= currentSpeed; isMoving = true; this.playerDirection = -1 }
+    if (this.keys.D.isDown) { nextX += currentSpeed; isMoving = true; this.playerDirection = 1 }
 
     if (this.keys.SPACE.isDown && !this.isAttacking) this.attack()
 
@@ -335,13 +376,13 @@ export class GameScene extends Phaser.Scene {
 
     if (this.checkObstacleCollision(nextX, nextY, 24)) canMove = false
 
-    // Movimiento libre (Sin clampear a pantalla para poder cruzar puertas)
+    // Aplicación del vector de movimiento (Sin clampear a ventana para habilitar transiciones)
     if (canMove) {
       this.player.x = nextX;
       this.player.y = nextY;
     }
 
-    // --- TRANSICIÓN AL SIGUIENTE NIVEL ---
+    // Lógica de validación de transición: Requiere la limpieza de la sala y superar los límites de cámara
     if (this.enemies.length === 0 && !this.floorActive) {
       if (this.player.x < 0 || this.player.x > 640 || this.player.y < 0 || this.player.y > 360) {
         console.log("¡Jugador salió de la sala!");
@@ -349,9 +390,9 @@ export class GameScene extends Phaser.Scene {
         this.player.y = 180;
         
         if (this.onLevelExit) {
-          this.onLevelExit(); // Pide el mapa a React / Backend
+          this.onLevelExit();
         } else {
-          this.startFloor(); // Fallback procedural
+          this.startFloor();
         }
       }
     }
@@ -382,8 +423,19 @@ export class GameScene extends Phaser.Scene {
 
       if (distance > 40 && distance < 200 && !enemy.isAttacking) {
         const angle = Phaser.Math.Angle.Between(enemy.sprite.x, enemy.sprite.y, this.player.x, this.player.y)
-        enemy.sprite.x += Math.cos(angle) * 0.8
-        enemy.sprite.y += Math.sin(angle) * 0.8
+        const speed = 0.8
+        const nextEnemyX = enemy.sprite.x + Math.cos(angle) * speed
+        const nextEnemyY = enemy.sprite.y + Math.sin(angle) * speed
+
+        // Colisión de enemigos con obstáculos (Bordeando paredes)
+        if (!this.checkObstacleCollision(nextEnemyX, nextEnemyY, 16)) {
+          enemy.sprite.x = nextEnemyX
+          enemy.sprite.y = nextEnemyY
+        } else if (!this.checkObstacleCollision(nextEnemyX, enemy.sprite.y, 16)) {
+          enemy.sprite.x = nextEnemyX // Deslizamiento horizontal
+        } else if (!this.checkObstacleCollision(enemy.sprite.x, nextEnemyY, 16)) {
+          enemy.sprite.y = nextEnemyY // Deslizamiento vertical
+        }
 
         if (enemy.sprite.anims.currentAnim?.key !== 'enemy-idle') {
           enemy.sprite.play('enemy-idle')
@@ -429,7 +481,9 @@ export class GameScene extends Phaser.Scene {
     this.chests.forEach(chest => { if (chest.sprite && chest.sprite.active) chest.sprite.destroy(); });
     this.chests = [];
 
-    // Generamos sala vacía procedural si no usamos Backend
+    this.drawFloor();
+
+    // Invocación de mapeo procedural como respaldo por defecto
     this.createProceduralRoom();
 
     const enemyCount = this.enemiesPerFloor + Math.floor(this.currentFloor / 2)
@@ -487,7 +541,7 @@ export class GameScene extends Phaser.Scene {
     })
   }
 
-  // --- ANIMACIONES DE ITEMS DEL COMPAÑERO ---
+  /** Instancia el botín del cofre y aplica un tween de interpolación espacial */
   spawnItemFromChest(x, y, itemData) {
     const itemSprite = this.add.sprite(x, y, itemData.spriteKey, 0)
     itemSprite.setScale(0.8)
@@ -505,11 +559,10 @@ export class GameScene extends Phaser.Scene {
     })
   }
 
-  // --- LÓGICA DE BASE DE DATOS DEL COMPAÑERO (ARRAYS) ---
+  /** Recolecta el objeto del entorno y aplica sus mutadores estadísticos dinámicos al estado del jugador */
   collectItem(item) {
     item.sprite.destroy()
     
-    // Su sistema ahora itera sobre un Array de efectos, ideal para Bases de Datos
     if (item.data.effects && Array.isArray(item.data.effects)) {
       item.data.effects.forEach(effect => {
         switch(effect.type) {
@@ -572,13 +625,13 @@ export class GameScene extends Phaser.Scene {
           enemy.sprite.destroy()
           this.enemies = this.enemies.filter(e => e !== enemy)
           this.stats.kills++
-          this.stats.xp += (enemy.maxHp * 3) // Otorgamos XP basada en la vida del enemigo
+          this.stats.xp += (enemy.maxHp * 3);
           
           if (Math.random() < 0.4) {
             this.spawnChest(enemy.sprite.x, enemy.sprite.y)
           }
 
-          // --- APERTURA DE PUERTAS AL MATAR AL ÚLTIMO ---
+          // Condición de limpieza completada: Destrucción de barreras transicionales
           if (this.enemies.length === 0) {
             this.floorActive = false;
             
@@ -621,35 +674,39 @@ export class GameScene extends Phaser.Scene {
     enemy.sprite.setTexture('enemyAttack')
     enemy.sprite.play('enemy-attack')
 
-    const attackDamage = enemy.damage
-    this.stats.hp -= attackDamage
-    this.stats.totalDamageTaken += attackDamage
-    this.player.hp = this.stats.hp
-
-    if (this.stats.hp <= 0) {
-      this.gameOver = true
-      this.cancelAllTimers()
-      
-      if (this.onGameOver) {
-        this.onGameOver({
-          floor: this.currentFloor,
-          kills: this.stats.kills,
-          money: this.stats.money,
-          itemsCollected: this.stats.itemsCollected.length,
-          xp: this.stats.xp,
-          totalDamageDealt: Math.round(this.stats.totalDamageDealt),
-          totalDamageTaken: Math.round(this.stats.totalDamageTaken)
-        })
-      }
-      this.scene.pause()
-      return
-    }
-
+    // El ataque aplica daño al final de la animación (400ms). ¡Permite esquivarlo con Dash!
     this.addTrackedTimer(400, () => {
-      if (enemy.sprite.active) {
+      if (enemy.sprite.active && !this.gameOver) {
         enemy.isAttacking = false
         enemy.sprite.setTexture('enemy')
         enemy.sprite.play('enemy-idle')
+
+        // Verificamos si el jugador sigue dentro del rango de impacto (con margen de gracia)
+        const currentDist = Phaser.Math.Distance.Between(this.player.x, this.player.y, enemy.sprite.x, enemy.sprite.y)
+        if (currentDist < 65) {
+          const attackDamage = enemy.damage
+          this.stats.hp -= attackDamage
+          this.stats.totalDamageTaken += attackDamage
+          this.player.hp = this.stats.hp
+
+          if (this.stats.hp <= 0) {
+            this.gameOver = true
+            this.cancelAllTimers()
+            
+            if (this.onGameOver) {
+              this.onGameOver({
+                floor: this.currentFloor,
+                kills: this.stats.kills,
+                money: this.stats.money,
+                itemsCollected: this.stats.itemsCollected.length,
+                xp: this.stats.xp,
+                totalDamageDealt: Math.round(this.stats.totalDamageDealt),
+                totalDamageTaken: Math.round(this.stats.totalDamageTaken)
+              })
+            }
+            this.scene.pause()
+          }
+        }
       }
     })
   }
