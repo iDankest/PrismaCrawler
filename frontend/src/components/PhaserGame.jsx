@@ -9,6 +9,9 @@ import { useItemsCache } from '../hooks/useItemsCache'
 import { initializeItemsDB } from '../data/itemsDatabase'
 import { useNavigate } from 'react-router-dom'
 
+// Definimos la URL de la API dinámicamente
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
 function PhaserGame() {
   const gameContainer = useRef(null)
   const gameRef = useRef(null)
@@ -32,7 +35,7 @@ function PhaserGame() {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:3000/api/game/map/${mapId}`,
+        `${API_URL}/api/game/map/${mapId}`,
       );
       if (!response.ok) throw new Error("Error al cargar mapa");
       const data = await response.json();
@@ -54,7 +57,7 @@ function PhaserGame() {
   useEffect(() => {
     const fetchMap = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/game/map/1");
+        const response = await fetch(`${API_URL}/api/game/map/1`);
 
         if (!response.ok) {
           throw new Error(`Error HTTP: ${response.status}`);
@@ -109,9 +112,34 @@ function PhaserGame() {
 
         // Conectar callbacks
         this.onGameStateUpdate = (state) => setGameState(state);
-        this.onGameOver = (stats) => {
+        this.onGameOver = async (stats) => {
           setGameOver(true);
           setFinalStats(stats);
+
+          // --- NUEVO: Enviar los resultados al backend ---
+          try {
+            const token = localStorage.getItem('token'); // Asumimos que guardas el token en localStorage al hacer Login
+            if (token) {
+              const response = await fetch(`${API_URL}/api/game/score`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                  floor: stats.floor || 1,
+                  kills: stats.kills || 0,
+                  xp: stats.xp || 0, // Asegúrate de que tu GameScene envíe la 'xp' en el objeto stats
+                  totalDamageDealt: stats.totalDamageDealt || 0,
+                  totalDamageTaken: stats.totalDamageTaken || 0
+                })
+              });
+              
+              if (response.ok) console.log('🏆 Puntuación guardada en la base de datos con éxito');
+            }
+          } catch (error) {
+            console.error('❌ Error al guardar la puntuación:', error);
+          }
         };
         this.onInventoryUpdate = (items) => setInventory([...items]);
         
@@ -171,23 +199,25 @@ function PhaserGame() {
   }
 
   return (
-    <div className="m-4  flex">
+    <div className="relative w-full h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 flex items-center justify-center">
       {/* CONTENEDOR DEL JUEGO */}
-      <div className="">
+      <div className="relative">
         <div
           ref={gameContainer}
-          className=""
-         
+          className="border-4 border-cyan-500 rounded-lg overflow-hidden shadow-2xl"
+          style={{
+            boxShadow:
+              "0 0 30px rgba(6, 182, 212, 0.4), inset 0 0 20px rgba(59, 130, 246, 0.1)",
+          }}
         />
       </div>
 
       {/* PANELS FLOTANTES */}
-      
       {gameState && !gameOver && (
-        <div className="flex flex-col gap-2 ml-4" >
+        <>
           <StatsPanel gameState={gameState} />
           <InventoryPanel inventory={inventory} />
-        </div>
+        </>
       )}
 
       {/* MODAL GAME OVER */}
@@ -261,8 +291,8 @@ function PhaserGame() {
               </button>
             </div>
           </div>
-        </div> 
-       )} 
+        </div>
+      )}
     </div>
   );
 }
