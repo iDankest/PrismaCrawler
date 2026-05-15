@@ -9,6 +9,7 @@ PrismaCrawler es una aplicación web full-stack de estilo **Rogue-like** que com
 ## Índice
 
 - [Requisitos Previos](#requisitos-previos)
+- [Características Principales](#características-principales)
 - [Instalación y Configuración](#instalación-y-configuración)
 - [Estructura del Proyecto](#estructura-del-proyecto)
 - [Scripts Disponibles](#scripts-disponibles)
@@ -26,6 +27,16 @@ Antes de comenzar, asegúrese de tener instalado en su sistema:
 - **Node.js** v18 o superior
 - **PostgreSQL** (instancia local o en la nube)
 - **npm** (incluido con Node.js)
+
+---
+
+## Características Principales
+
+- **Autenticación Segura**: Sistema de registro e inicio de sesión utilizando JWT y contraseñas encriptadas con Bcrypt.
+- **Motor de Juego Integrado**: Frontend desarrollado con React y motor gráfico Phaser para una experiencia de exploración de mazmorras inmersiva en HTML5 Canvas.
+- **Gestión de Mapas**: Los niveles son servidos por la API REST desde PostgreSQL, contando además con un sistema de _fallback_ procedural en el cliente.
+- **Progresión y Estadísticas**: Sistema de combate, cálculo de daño, recolección de experiencia (XP), sistema de curación y paneles flotantes de inventario y estadísticas.
+- **Leaderboard Global**: Salón de la fama con el top 10 de jugadores globales destacando su desempeño.
 
 ---
 
@@ -71,9 +82,11 @@ PORT=3000
 
 ### 5. Sincronizar la base de datos con Prisma
 
-Genere el cliente Prisma y ejecute las migraciones para crear las tablas en PostgreSQL:
+Sincronice el esquema con su base de datos PostgreSQL, genere el cliente de Prisma y cree su primera migración:
 
 ```bash
+npx prisma db push
+npx prisma generate
 npx prisma migrate dev --name init
 ```
 
@@ -107,13 +120,21 @@ PrismaCrawler/
 │   ├── prisma/
 │   │   ├── schema.prisma       # Esquema de datos y modelos
 │   │   └── migrations/         # Historial de migraciones
+│   ├── src/
+│   │   ├── config/             # Configuración de Prisma Client y variables globales
+│   │   ├── controllers/        # Lógica de negocio y manejo de respuestas HTTP
+│   │   ├── middlewares/        # Validación JWT, control de roles y manejo de errores
+│   │   ├── routes/             # Definición de endpoints de la API REST
+│   │   ├── services/           # Lógica específica del juego (combates, XP, inventario)
+│   │   └── utils/              # Utilidades y clases de apoyo (ej. AppError)
+│   └── tests/                  # Pruebas de integración con Jest y Supertest
+├── frontend/                   # Aplicación cliente (React + Phaser)
+│   ├── public/                 # Archivos estáticos accesibles públicamente
 │   └── src/
-│       ├── config/             # Configuración de Prisma Client y variables globales
-│       ├── controllers/        # Lógica de negocio y manejo de respuestas HTTP
-│       ├── middlewares/        # Validación JWT, control de roles y manejo de errores
-│       ├── routes/             # Definición de endpoints de la API REST
-│       └── services/           # Lógica específica del juego (combates, XP, inventario)
-├── frontend/                   # Aplicación cliente
+│       ├── assets/             # Recursos gráficos, sprites y multimedia
+│       ├── components/         # Componentes reutilizables de la UI (GameHeader, PhaserGame)
+│       ├── pages/              # Vistas principales de la aplicación (Game, Login, etc.)
+│       └── App.jsx / main.jsx  # Puntos de entrada y configuración de rutas
 ├── package.json                # Scripts y dependencias raíz
 └── README.md
 ```
@@ -147,6 +168,16 @@ Los siguientes scripts están disponibles desde la raíz del proyecto:
 | **BcryptJS** | ^3.0.3 | Encriptación segura de contraseñas |
 | **Jest** | — | Framework de testing |
 | **Supertest** | — | Testing de endpoints HTTP |
+
+### Frontend
+
+| Tecnología | Propósito |
+|------------|-----------|
+| **React** | Biblioteca principal para la interfaz de usuario (SPA) |
+| **Phaser** | Motor de renderizado web y mecánicas del juego |
+| **Tailwind CSS** | Framework de CSS para diseño responsivo y estilizado rápido |
+| **React Router** | Enrutamiento protegido entre Login, Juego y Leaderboard |
+| **Axios / Fetch** | Clientes HTTP para las comunicaciones con la API REST |
 
 ### Herramientas de Desarrollo
 

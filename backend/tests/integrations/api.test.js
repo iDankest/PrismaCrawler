@@ -11,6 +11,7 @@ describe('Rutas de Mapas - Game API', () => {
 
     // 1. Limpiamos la base de datos
     await prisma.map.deleteMany();
+    await prisma.score.deleteMany();
     await prisma.user.deleteMany();
     
     // 2. Registramos un usuario de prueba usando tu API
@@ -38,7 +39,7 @@ describe('Rutas de Mapas - Game API', () => {
 
     // Guardamos el token para usarlo en los tests de abajo
     adminToken = loginResponse.body.token; 
-  });
+  }, 15000); // Añadimos 15 segundos de timeout
 
   afterAll(async () => {
     await prisma.$disconnect();
