@@ -1,15 +1,19 @@
 // src/components/PhaserGame.jsx
 
-import { useEffect, useRef, useState } from "react";
-import Phaser from "phaser";
-import { GameScene } from "../Scenes/gameScene"; // Asegúrate de que la ruta sea correct
-import { StatsPanel } from "./StatsPanel";
-import { InventoryPanel } from "./inventoryPanel"; // Ajusté la 'i' minúscula a tu import original
+import { useEffect, useRef, useState } from 'react'
+import Phaser from 'phaser'
+import { GameScene } from '../Scenes/gameScene'
+import { StatsPanel } from './StatsPanel'
+import { InventoryPanel } from './inventoryPanel'
+import { useItemsCache } from '../hooks/useItemsCache'
+import { initializeItemsDB } from '../data/itemsDatabase'
+import { useNavigate } from 'react-router-dom'
 
 function PhaserGame() {
-  const gameContainer = useRef(null);
-  const gameRef = useRef(null);
-  const sceneRef = useRef(null);
+  const gameContainer = useRef(null)
+  const gameRef = useRef(null)
+  const sceneRef = useRef(null)
+  const navigate = useNavigate()
 
   const [gameState, setGameState] = useState(null);
   const [inventory, setInventory] = useState([]);
@@ -163,8 +167,8 @@ function PhaserGame() {
   };
 
   const handleViewLeaderboard = () => {
-    console.log("Navigate to leaderboard");
-  };
+    navigate('/leaderboard')
+  }
 
   return (
     <div className="relative w-full h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 flex items-center justify-center">
