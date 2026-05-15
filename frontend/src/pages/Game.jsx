@@ -291,7 +291,7 @@ import PhaserGame from '../components/PhaserGame'
 
 function Game() {
   return (
-    <section className="relative h-screen bg-[#0B122E] text-[#BBC3FF] overflow-hidden">
+    <section className="relative h-screen text-[#BBC3FF] overflow-hidden">
       {/* Fondo con degradado */}
       <div className="absolute inset-0 bg-linear-to-t from-[#0A0B14] via-transparent to-transparent opacity-80 z-0"></div>
       
