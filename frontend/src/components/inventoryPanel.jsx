@@ -4,7 +4,7 @@ import { ITEMS_DB } from '../data/itemsDatabase'
 
 export function InventoryPanel({ inventory = [] }) {
   return (
-    <div className="absolute left-4 bottom-4 z-50 flex flex-col gap-2">
+    <div className="left-4 bottom-4 z-50 flex flex-col gap-2">
       <h3 className="text-cyan-500 text-[10px] font-bold uppercase tracking-widest ml-1">
         Items ({inventory.length})
       </h3>
@@ -19,7 +19,7 @@ export function InventoryPanel({ inventory = [] }) {
             <div 
               key={`${itemId}-${index}`}
               title={item.name}
-              className="w-8 h-8 bg-slate-800/80 border border-slate-700 flex items-center justify-center rounded-sm hover:scale-110 transition-transform cursor-help group relative"
+              className="w-8 h-8 bg-slate-800/80 border border-slate-700 flex items-center justify-center rounded-sm hover:scale-110 transition-transform cursor-help"
             >
               {/* EMOJI ICONO */}
               <span className="text-lg grayscale group-hover:grayscale-0">
@@ -42,7 +42,7 @@ export function InventoryPanel({ inventory = [] }) {
         
         {/* Rellenar slots vacíos */}
         {[...Array(Math.max(0, 16 - inventory.length))].map((_, i) => (
-          <div key={`empty-${i}`} className="w-8 h-8 border border-white/5 rounded-sm" />
+          <div key={`empty-${i}`} className="w-8 h-8 border border-white/5 rounded-sm " />
         ))}
       </div>
     </div>
