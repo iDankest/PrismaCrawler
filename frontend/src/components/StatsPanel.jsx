@@ -13,7 +13,7 @@ export function StatsPanel({ gameState }) {
   }, [gameState.speedMultiplier])
 
   return (
-    <div className="absolute right-4 top-4 w-64 z-50 group">
+    <div className=" w-64 z-50 group">
       {/* Picos de acentuación del HUD (Estética Cyber-Dungeon) */}
       <div className="absolute top-1 left-1 w-2 h-2 border-t-2 border-l-2 border-[#BBC3FF] z-20"></div>
       <div className="absolute top-1 right-1 w-2 h-2 border-t-2 border-r-2 border-[#BBC3FF] z-20"></div>
@@ -45,9 +45,9 @@ export function StatsPanel({ gameState }) {
           </div>
         </div>
 
-        {/* Rejilla de Atributos */}
+{/*         
         <div className="grid grid-cols-2 gap-2">
-          {/* Daño */}
+          
           <div className="bg-black/40 p-2 border border-[#2A2C3E] hover:border-[#4D61FF] transition-colors">
              <p className="text-[8px] text-[#74768B] uppercase">Atk_Power</p>
              <p className="text-[#BBC3FF] font-mono font-bold text-xs">
@@ -55,7 +55,7 @@ export function StatsPanel({ gameState }) {
              </p>
           </div>
 
-          {/* Velocidad */}
+          
           <div className={`bg-black/40 p-2 border transition-all duration-300 ${
             speedChanged ? 'border-cyan-400 scale-105' : 'border-[#2A2C3E]'
           }`}>
@@ -65,14 +65,14 @@ export function StatsPanel({ gameState }) {
              </p>
           </div>
 
-          {/* Cadencia / Attack Speed */}
+          
           <div className="bg-black/40 p-2 border border-[#2A2C3E] col-span-2 flex justify-between items-center">
              <p className="text-[8px] text-[#74768B] uppercase">Sync_Rate</p>
              <p className="text-blue-400 font-mono font-bold text-[10px]">
                {gameState.attackSpeed || '1.00'}ms
              </p>
           </div>
-        </div>
+        </div> */}
 
         {/* Footer del panel */}
         <div className="mt-3 text-[7px] text-[#74768B] font-mono flex justify-between items-center opacity-50">

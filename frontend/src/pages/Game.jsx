@@ -291,29 +291,26 @@ import PhaserGame from '../components/PhaserGame'
 
 function Game() {
   return (
-    <section className="relative h-screen text-[#BBC3FF] overflow-hidden">
+    <section className="flex min-h-screen overflow-hidden bg-grid bg-[#0D1230]">
       {/* Fondo con degradado */}
-      <div className="absolute inset-0 bg-linear-to-t from-[#0A0B14] via-transparent to-transparent opacity-80 z-0"></div>
-      
-      {/* Contenedor Principal Flex */}
-      <div className="relative flex h-screen z-10">
-        
-        {/* 1. SIDEBAR: Altura completa, ancho fijo */}
-        <Sidebar />
+      <div className=" inset-0 bg-linear-to-t from-[#0A0B14] via-transparent to-transparent opacity-80 z-0"></div>
 
-        {/* 2. CONTENEDOR DERECHO: Ocupa el resto del ancho y se divide verticalmente */}
-        <div className="flex-1 flex flex-col">
-          
-          {/* HEADER SUPERIOR: Ancho completo del espacio restante */}
-          <GameHeader />
-
-          {/* AREA DE JUEGO: Ocupa todo el espacio sobrante */}
-          <main className="flex-1 ">
-            <PhaserGame />
-          </main>
-          
+        <div className="flex">
+          <Sidebar  />
         </div>
-      </div>
+        <div className="flex flex-col h-[10em] w-full ">
+          <div className="h-[5em]">
+          <GameHeader /> 
+          </div>
+          <div className="flex m-4">
+            <PhaserGame />
+          </div>
+        </div>
+       
+
+          
+        
+      
     </section>
   )
 }

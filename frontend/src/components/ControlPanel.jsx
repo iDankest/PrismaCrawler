@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import api from '../api/axios'
+import { Sword, BookOpen } from 'pixelarticons/react'
 
 export function ControlsPanel() {
   const [activeTab, setActiveTab] = useState('controls')
@@ -28,7 +29,7 @@ export function ControlsPanel() {
   const currentItem = allItems[selectedItemIdx]
 
   return (
-    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[600px] bg-[#1D2240]/95 border-2 border-[#74768B] shadow-[0_0_25px_rgba(0,0,0,0.8)] z-[60] overflow-hidden backdrop-blur-md">
+    <div className=" bg-[#1D2240]/95 border-2 border-[#74768B] shadow-[0_0_25px_rgba(0,0,0,0.8)] z-60 overflow-hidden backdrop-blur-md">
       
       {/* HEADER / PESTAÑAS */}
       <div className="flex bg-black/40 border-b border-[#74768B]/30">
@@ -36,18 +37,18 @@ export function ControlsPanel() {
           active={activeTab === 'controls'} 
           onClick={() => handleTabChange('controls')}
           label="Manual_Combate"
-          icon="⚔️"
+          icon={<Sword size={16} />}
         />
         <TabButton 
           active={activeTab === 'items'} 
           onClick={() => handleTabChange('items')}
           label="Archivo_Datos"
-          icon="📖"
+          icon={<BookOpen size={16} />}
         />
       </div>
 
       {/* ÁREA DE CONTENIDO */}
-      <div className="p-4 h-48 overflow-y-auto custom-scrollbar font-mono">
+      <div className="p-4 h-48 overflow-y-auto custom-scrollbar">
         {activeTab === 'controls' ? (
           <div className="grid grid-cols-2 gap-x-8 gap-y-2 animate-in fade-in duration-300">
             <ControlRow label="Navegación" value="WASD" />

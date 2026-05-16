@@ -32,7 +32,7 @@ export function ActionLog({ gameState }) {
   }
 
   return (
-    <div className="absolute bottom-4 left-4 w-72 z-50 group pointer-events-none">
+    <div className="w-72 z-50 group pointer-events-none">
       {/* Decoración de esquina superior izquierda */}
       <div className="absolute -top-1 -left-1 w-2 h-2 border-t-2 border-l-2 border-[#4D61FF] z-20"></div>
 

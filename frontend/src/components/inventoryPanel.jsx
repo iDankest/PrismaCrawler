@@ -19,7 +19,7 @@ export function InventoryPanel({ inventory = [] }) {
   }, [])
 
   return (
-    <div className="absolute right-4 bottom-4 w-56 z-50 group pointer-events-auto">
+    <div className="relative w-56 z-50 group pointer-events-auto">
       {/* Decoración de esquinas (Picos) */}
       <div className="absolute -top-1 -left-1 w-2 h-2 border-t-2 border-l-2 border-[#BBC3FF] z-20"></div>
       <div className="absolute -top-1 -right-1 w-2 h-2 border-t-2 border-r-2 border-[#BBC3FF] z-20"></div>
