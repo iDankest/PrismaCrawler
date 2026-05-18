@@ -154,46 +154,81 @@ function PhaserGame() {
       </div>
 
       {/* PANTALLA DE FIN DE JUEGO (Modal) */}
-      {gameOver && finalStats && (
-        <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex items-center justify-center p-6">
-          <div className="bg-[#1D2240] border-4 border-red-900/50 p-10 max-w-md w-full shadow-[0_0_100px_rgba(255,0,0,0.3)] text-center">
-            <h1 className="text-red-600 text-5xl font-black mb-8 tracking-tighter uppercase italic animate-pulse">
-              CONEXIÓN_PERDIDA
-            </h1>
+       {gameOver && finalStats && (
+        <div className="fixed inset-0 z-200 bg-[#0D1230] backdrop-blur-md flex items-center justify-center p-6 bg-grid">
+          <div className="absolute inset-0 bg-linear-to-t from-[#0A0B14] via-transparent to-transparent opacity-80"></div>
+          
+          {/* Envoltorio con posicionamiento relativo y grupo para controlar hover si se desea */}
+          <div className="w-full max-w-md z-50 group relative">
             
-            <div className="grid grid-cols-2 gap-4 mb-10 text-left">
-              <StatEntry label="Nivel" val={finalStats.floor} />
-              <StatEntry label="Eliminaciones" val={finalStats.kills} />
-              <StatEntry label="Créditos" val={finalStats.money} />
-              <StatEntry label="Núcleos_Datos" val={finalStats.itemsCollected} />
-            </div>
+            {/* Picos de acentuación del HUD adaptados al tamaño del Modal */}
+            <div className="absolute top-1 left-1 w-3 h-3 border-t-2 border-l-2 border-[#BBC3FF] z-20"></div>
+            <div className="absolute top-1 right-1 w-3 h-3 border-t-2 border-r-2 border-[#BBC3FF] z-20"></div>
+            <div className="absolute bottom-1 left-1 w-3 h-3 border-b-2 border-l-2 border-[#BBC3FF] z-20"></div>
+            <div className="absolute bottom-1 right-1 w-3 h-3 border-b-2 border-r-2 border-[#BBC3FF] z-20"></div>
 
-            <div className="flex flex-col gap-3">
-              <button 
-                onClick={handleRestart} 
-                className="bg-[#4D61FF] hover:bg-white hover:text-black text-white py-4 font-black uppercase tracking-widest transition-all"
-                style={{ clipPath: 'polygon(5% 0, 100% 0, 95% 100%, 0 100%)' }}
-              >
-                Reiniciar Terminal
-              </button>
-              <button onClick={() => navigate('/leaderboard')} className="border border-[#74768B] text-[#74768B] hover:text-white py-2 text-xs uppercase tracking-widest transition-all">
-                Acceder_Rankings
-              </button>
+            {/* Contenedor principal con el mismo fondo, borde y padding del HUD */}
+            <div className="bg-[#1D2240]/90 border-2 border-[#74768B] p-6 backdrop-blur-sm shadow-2xl">
+              
+              {/* Header estilo HUD de vida */}
+              <h3 className="text-[#BBC3FF] font-black text-[10px] uppercase tracking-[0.3em] mb-6 border-b border-[#74768B]/30 pb-3 flex justify-between items-center">
+                <span>{'>'} SYSTEM_TERMINATED</span>
+                <span className="animate-pulse text-red-500">●</span>
+              </h3>
+
+              <div className="text-center mb-6">
+                <h1 className="text-2xl font-black uppercase tracking-widest text-[#BBC3FF] drop-shadow-[0_0_10px_rgba(185,193,253,0.3)]">
+                  CONEXIÓN PERDIDA
+                </h1>
+                <p className="text-[9px] text-[#74768B] tracking-[0.15em] uppercase mt-2">
+                  La unidad operativa ha sufrido daños catastróficos.
+                </p>
+              </div>
+              
+              {/* Lista de estadísticas con el estilo de bloque plano e idéntico espaciado */}
+              <div className="grid grid-cols-2 gap-3 mb-6 text-left">
+                <StatEntry label="Sector" val={`SEC_${String(finalStats.floor || 1).padStart(2, '0')}`} />
+                <StatEntry label="Eliminaciones" val={finalStats.kills || 0} />
+                <StatEntry label="Daño Infligido" val={(finalStats.totalDamageDealt || 0).toLocaleString()} />
+                <StatEntry label="Daño Recibido" val={(finalStats.totalDamageTaken || 0).toLocaleString()} />
+              </div>
+
+              {/* Botonera adaptada con los botones de la estética plano-cyber */}
+              <div className="flex flex-col gap-3">
+                <button 
+                  onClick={() => window.location.reload()} 
+                  className="w-full py-3 bg-[#BBC3FF] hover:bg-[#B9C1FD] text-[#0A0B14] font-black uppercase text-[10px] tracking-[0.2em] transition-all duration-150 shadow-[0_0_15px_rgba(185,193,253,0.2)] active:scale-98"
+                >
+                  Reiniciar
+                </button>
+                
+                <button 
+                  onClick={() => navigate('/leaderboard')} 
+                  className="w-full py-2.5 bg-transparent hover:bg-[#74768B]/10 text-[#74768B] hover:text-[#BBC3FF] border border-[#74768B]/40 hover:border-[#BBC3FF]/60 font-black uppercase text-[9px] tracking-[0.2em] transition-all"
+                >
+                  Ver Ranking
+                </button>
+              </div>
             </div>
           </div>
+
         </div>
       )}
     </div>
   )
 }
 
+/**
+ * Componente interno de estadísticas adaptado para el nuevo estilo plano de Prisma.
+ */
 function StatEntry({ label, val }) {
   return (
-    <div className="bg-black/40 border border-white/5 p-3 flex flex-col">
-      <span className="text-[8px] text-[#74768B] uppercase tracking-widest mb-1">{label}</span>
-      <span className="text-xl font-black text-[#BBC3FF]">{val}</span>
+    <div className="bg-[#12162E]/50 border border-[#74768B]/20 p-3 flex flex-col justify-between">
+      <span className="text-[7px] text-[#74768B] uppercase tracking-[0.15em] mb-1">{label}</span>
+      <span className="text-xs font-black text-[#BBC3FF]">{val}</span>
     </div>
   )
 }
+
 
 export default PhaserGame
