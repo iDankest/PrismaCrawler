@@ -59,7 +59,7 @@ function PhaserGame() {
   }, [])
 
   useEffect(() => {
-    if (isLoading || !mapData || !gameContainer.current || gameRef.current) return
+    if (!mapData || !gameContainer.current || gameRef.current) return
 
     class CustomGameScene extends GameScene {
       create() {
@@ -84,8 +84,18 @@ function PhaserGame() {
     }
 
     gameRef.current = new Phaser.Game(config)
-    return () => { if (gameRef.current) { gameRef.current.destroy(true); gameRef.current = null; } }
-  }, [isLoading, mapData])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapData])
+
+  // Efecto independiente para limpiar el juego únicamente al desmontar el componente
+  useEffect(() => {
+    return () => {
+      if (gameRef.current) {
+        gameRef.current.destroy(true)
+        gameRef.current = null
+      }
+    }
+  }, [])
 
   const handleRestart = () => {
     setGameOver(false)

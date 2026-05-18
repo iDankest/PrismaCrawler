@@ -13,7 +13,7 @@ export function Leaderboard() {
 
   useEffect(() => {
     // Obtenemos los datos de la DB usando fetch nativo
-    fetch(`${API_URL}/api/game/leaderboard`)
+    fetch(`${API_URL}/game/leaderboard`)
       .then(res => {
         if (!res.ok) throw new Error("Fallo al conectar con el archivo")
         return res.json()
