@@ -34,10 +34,10 @@ export function Leaderboard() {
     const list = [...scores]
     return list.sort((a, b) => {
       if (activeFilter === 'damageDealt') {
-        return (b.damageDealt || 0) - (a.damageDealt || 0)
+        return (b.totalDamageDealt || 0) - (a.totalDamageDealt || 0)
       }
       if (activeFilter === 'damageTaken') {
-        return (b.damageTaken || 0) - (a.damageTaken || 0)
+        return (b.totalDamageTaken || 0) - (a.totalDamageTaken || 0)
       }
       if (activeFilter === 'kills') {
         return (b.kills || 0) - (a.kills || 0)
