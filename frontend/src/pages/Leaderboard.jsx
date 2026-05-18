@@ -82,33 +82,33 @@ export function Leaderboard() {
         <div className="grid grid-cols-3 gap-2 mb-6 border-b border-[#74768B]/20 pb-6">
           <button 
             onClick={() => setActiveFilter('damageDealt')}
-            className={`py-2 px-3 text-[9px] font-black tracking-widest uppercase border transition-all duration-150 ${
+            className={`py-2 px-3 text-[9px] flex items-center justify-center gap-1 font-black tracking-widest uppercase border transition-all duration-150 ${
               activeFilter === 'damageDealt' 
                 ? 'bg-[#BBC3FF] text-[#0A0B14] border-[#BBC3FF]' 
                 : 'bg-transparent text-[#74768B] border-[#74768B]/40 hover:text-[#BBC3FF] hover:border-[#BBC3FF]/60'
             }`}
           >
-            ⚔️ Damage_Dealt
+            {<Sword className="w-4 h-4" />} Damage_Dealt
           </button>
           <button 
             onClick={() => setActiveFilter('damageTaken')}
-            className={`py-2 px-3 text-[9px] font-black tracking-widest uppercase border transition-all duration-150 ${
+            className={`py-2 px-3 text-[9px] flex items-center justify-center gap-1 font-black tracking-widest uppercase border transition-all duration-150 ${
               activeFilter === 'damageTaken' 
                 ? 'bg-[#BBC3FF] text-[#0A0B14] border-[#BBC3FF]' 
                 : 'bg-transparent text-[#74768B] border-[#74768B]/40 hover:text-[#BBC3FF] hover:border-[#BBC3FF]/60'
             }`}
           >
-            💔 Damage_Taken
+            {<Shield className="w-4 h-4" />} Damage_Taken
           </button>
           <button 
             onClick={() => setActiveFilter('kills')}
-            className={`py-2 px-3 text-[9px] font-black tracking-widest uppercase border transition-all duration-150 ${
+            className={`py-2 px-3 flex items-center justify-center gap-1 text-[9px] font-black tracking-widest uppercase border transition-all duration-150 ${
               activeFilter === 'kills' 
                 ? 'bg-[#BBC3FF] text-[#0A0B14] border-[#BBC3FF]' 
                 : 'bg-transparent text-[#74768B] border-[#74768B]/40 hover:text-[#BBC3FF] hover:border-[#BBC3FF]/60'
             }`}
           >
-            💀 Kill_Score
+            {<Skull className="w-4 h-4" />} Kill_Score
           </button>
         </div>
 
