@@ -25,7 +25,7 @@ function PhaserGame() {
     setIsLoading(true)
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
-      const response = await fetch(`${API_URL}/api/game/map/${mapId}`)
+      const response = await fetch(`${API_URL}/game/map/${mapId}`)
       if (!response.ok) throw new Error("Error al cargar mapa")
       const data = await response.json()
       const mapPayload = data.data || data
@@ -42,7 +42,7 @@ function PhaserGame() {
     const fetchMap = async () => {
       try {
         const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
-        const response = await fetch(`${API_URL}/api/game/map/1`)
+        const response = await fetch(`${API_URL}/game/map/1`)
         const data = await response.json()
         const mapPayload = data.data || data
         setMapData(mapPayload)
