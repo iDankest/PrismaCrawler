@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { LoadingScreen } from '../components/loading'
-import logoImg from '../assets/Logo.png'
+import logoImg from '../assets/logo.png'
 import personajeGif from '../assets/Personaje.gif'
 import {useNavigate} from 'react-router-dom'
 import { useApi } from '../hooks/useApi.js'
