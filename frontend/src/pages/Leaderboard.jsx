@@ -9,7 +9,7 @@ export function Leaderboard() {
   const [scores, setScores] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate()
-  const [activeFilter, setActiveFilter] = useState('damageDealt')
+  const [activeFilter, setActiveFilter] = useState('totalDamageDealt')
 
   useEffect(() => {
     // Obtenemos los datos de la DB usando fetch nativo
@@ -33,11 +33,11 @@ export function Leaderboard() {
   const sortedScores = useMemo(() => {
     const list = [...scores]
     return list.sort((a, b) => {
-      if (activeFilter === 'damageDealt') {
-        return (b.damageDealt || 0) - (a.damageDealt || 0)
+      if (activeFilter === 'totalDamageDealt') {
+        return (b.totalDamageDealt || 0) - (a.totalDamageDealt || 0)
       }
-      if (activeFilter === 'damageTaken') {
-        return (b.damageTaken || 0) - (a.damageTaken || 0)
+      if (activeFilter === 'totalDamageTaken') {
+        return (b.totalDamageTaken || 0) - (a.totalDamageTaken || 0)
       }
       if (activeFilter === 'kills') {
         return (b.kills || 0) - (a.kills || 0)
@@ -81,9 +81,9 @@ export function Leaderboard() {
         {/* 1. BOTONES DE FILTRO SUPERIORES */}
         <div className="grid grid-cols-3 gap-2 mb-6 border-b border-[#74768B]/20 pb-6">
           <button 
-            onClick={() => setActiveFilter('damageDealt')}
+            onClick={() => setActiveFilter('totalDamageDealt')}
             className={`py-2 px-3 text-[9px] flex items-center justify-center gap-1 font-black tracking-widest uppercase border transition-all duration-150 ${
-              activeFilter === 'damageDealt' 
+              activeFilter === 'totalDamageDealt' 
                 ? 'bg-[#BBC3FF] text-[#0A0B14] border-[#BBC3FF]' 
                 : 'bg-transparent text-[#74768B] border-[#74768B]/40 hover:text-[#BBC3FF] hover:border-[#BBC3FF]/60'
             }`}
@@ -91,9 +91,9 @@ export function Leaderboard() {
             {<Sword className="w-4 h-4" />} Damage_Dealt
           </button>
           <button 
-            onClick={() => setActiveFilter('damageTaken')}
+            onClick={() => setActiveFilter('totalDamageTaken')}
             className={`py-2 px-3 text-[9px] flex items-center justify-center gap-1 font-black tracking-widest uppercase border transition-all duration-150 ${
-              activeFilter === 'damageTaken' 
+              activeFilter === 'totalDamageTaken' 
                 ? 'bg-[#BBC3FF] text-[#0A0B14] border-[#BBC3FF]' 
                 : 'bg-transparent text-[#74768B] border-[#74768B]/40 hover:text-[#BBC3FF] hover:border-[#BBC3FF]/60'
             }`}
@@ -133,8 +133,8 @@ export function Leaderboard() {
                 <tr className="border-b border-[#74768B]/20 text-[#74768B] text-[8px] uppercase tracking-[0.2em]">
                   <th className="p-3">Rank</th>
                   <th className="p-3">Operator</th>
-                  <th className={`p-3 text-center transition-colors ${activeFilter === 'damageDealt' ? 'text-[#BBC3FF]' : ''}`}>Damage Dealt</th>
-                  <th className={`p-3 text-center transition-colors ${activeFilter === 'damageTaken' ? 'text-[#BBC3FF]' : ''}`}>Damage Taken</th>
+                  <th className={`p-3 text-center transition-colors ${activeFilter === 'totalDamageDealt' ? 'text-[#BBC3FF]' : ''}`}>Damage Dealt</th>
+                  <th className={`p-3 text-center transition-colors ${activeFilter === 'totalDamageTaken' ? 'text-[#BBC3FF]' : ''}`}>Damage Taken</th>
                   <th className={`p-3 text-center transition-colors ${activeFilter === 'kills' ? 'text-[#BBC3FF]' : ''}`}>Kills</th>
                   <th className="p-3 text-right">Sector</th>
                 </tr>
@@ -168,16 +168,16 @@ export function Leaderboard() {
 
                       {/* DAÑO DADO */}
                       <td className={`p-3 text-center text-xs font-mono font-bold transition-opacity ${
-                        activeFilter === 'damageDealt' ? 'text-orange-400' : 'text-orange-400/40'
+                        activeFilter === 'totalDamageDealt' ? 'text-orange-400' : 'text-orange-400/40'
                       }`}>
-                        {(s.damageDealt || 0).toLocaleString()}
+                        {(s.totalDamageDealt || 0).toLocaleString()}
                       </td>
 
                       {/* DAÑO RECIBIDO */}
                       <td className={`p-3 text-center text-xs font-mono font-bold transition-opacity ${
-                        activeFilter === 'damageTaken' ? 'text-red-400' : 'text-red-400/40'
+                        activeFilter === 'totalDamageTaken' ? 'text-red-400' : 'text-red-400/40'
                       }`}>
-                        {(s.damageTaken || 0).toLocaleString()}
+                        {(s.totalDamageTaken || 0).toLocaleString()}
                       </td>
 
                       {/* KILLS */}
