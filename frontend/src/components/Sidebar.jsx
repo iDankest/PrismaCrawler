@@ -13,6 +13,19 @@ export default function Sidebar() {
     navigate('/')
   }
 
+  const navItems = [
+    { 
+      icon: <Play className="w-6 h-6" />, 
+      label: 'PLAY', 
+      path: '/game' 
+    },
+    { 
+      icon: <Trophy className="w-6 h-6" />, 
+      label: 'RANK', 
+      path: '/leaderboard' 
+    }
+  ]
+
   return (
     // 1. AÑADIMOS EL FRAGMENTO PARA ENVOLVER TODO
     <>
