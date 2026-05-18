@@ -172,13 +172,13 @@ function PhaserGame() {
               
               {/* Header estilo HUD de vida */}
               <h3 className="text-[#BBC3FF] font-black text-[10px] uppercase tracking-[0.3em] mb-6 border-b border-[#74768B]/30 pb-3 flex justify-between items-center">
-                <span>{'>'} SYSTEM_TERMINATED</span>
+                <span>{'>'} Partida Terminada</span>
                 <span className="animate-pulse text-red-500">●</span>
               </h3>
 
               <div className="text-center mb-6">
                 <h1 className="text-2xl font-black uppercase tracking-widest text-[#BBC3FF] drop-shadow-[0_0_10px_rgba(185,193,253,0.3)]">
-                  CONEXIÓN PERDIDA
+                  GAME OVER
                 </h1>
                 <p className="text-[9px] text-[#74768B] tracking-[0.15em] uppercase mt-2">
                   La unidad operativa ha sufrido daños catastróficos.
