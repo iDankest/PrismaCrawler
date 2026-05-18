@@ -4,7 +4,8 @@
   "description": "Proyecto de Back-end con Prisma en IronHack!",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js",
+    "build": "npx prisma generate && npx prisma migrate deploy && npm run tsc",
+    "start": "node dist/index.js && node src/index.js",
     "dev": "nodemon src/index.js",
     "test": "dotenv -e .env.test -- jest --runInBand --detectOpenHandles",
     "test:watch": "dotenv -e .env.test -- jest --watchAll",
