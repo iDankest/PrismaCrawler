@@ -28,8 +28,9 @@ function PhaserGame() {
       const response = await fetch(`${API_URL}/game/map/${mapId}`)
       if (!response.ok) throw new Error("Error al cargar mapa")
       const data = await response.json()
-      setMapData(data)
-      if (sceneRef.current) sceneRef.current.setupBackendMap(data)
+      const mapPayload = data.data || data
+      setMapData(mapPayload)
+      if (sceneRef.current) sceneRef.current.setupBackendMap(mapPayload)
     } catch (error) {
       console.error("Fallo al cargar mapa", error)
     } finally {
@@ -43,7 +44,8 @@ function PhaserGame() {
         const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
         const response = await fetch(`${API_URL}/game/map/1`)
         const data = await response.json()
-        setMapData(data)
+        const mapPayload = data.data || data
+        setMapData(mapPayload)
       } catch (error) {
         setMapData({
           layout: ["##########","#P_______#","#___M____#","##########"],
@@ -57,7 +59,7 @@ function PhaserGame() {
   }, [])
 
   useEffect(() => {
-    if (isLoading || !mapData || !gameContainer.current || gameRef.current) return
+    if (!mapData || !gameContainer.current || gameRef.current) return
 
     class CustomGameScene extends GameScene {
       create() {
@@ -67,7 +69,7 @@ function PhaserGame() {
         this.onGameStateUpdate = (state) => setGameState(state)
         this.onGameOver = (stats) => { setGameOver(true); setFinalStats(stats); }
         this.onInventoryUpdate = (items) => setInventory([...items])
-        this.onLevelExit = () => loadMap(mapData.id + 1)
+        this.onLevelExit = () => loadMap(this.currentFloor + 1)
       }
     }
 
@@ -82,8 +84,18 @@ function PhaserGame() {
     }
 
     gameRef.current = new Phaser.Game(config)
-    return () => { if (gameRef.current) { gameRef.current.destroy(true); gameRef.current = null; } }
-  }, [isLoading, mapData])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapData])
+
+  // Efecto independiente para limpiar el juego únicamente al desmontar el componente
+  useEffect(() => {
+    return () => {
+      if (gameRef.current) {
+        gameRef.current.destroy(true)
+        gameRef.current = null
+      }
+    }
+  }, [])
 
   const handleRestart = () => {
     setGameOver(false)
